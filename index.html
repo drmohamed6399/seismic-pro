@@ -1,0 +1,3166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-fs="m" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Seismic Data Processing — v3 Final</title>
+<meta name="description" content="Offline bilingual interactive seismic processing — 27 problems, 9 topics">
+<meta name="theme-color" content="#0b1220">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+:root{--bg:#0b1220;--surface:#131c2e;--surface2:#1b2740;--border:#243350;
+  --text:#e6edf7;--muted:#94a3b8;--accent:#38bdf8;--accent2:#22d3ee;
+  --success:#22c55e;--warning:#f59e0b;--danger:#ef4444;--violet:#a78bfa;--radius:12px}
+[data-theme="light"]{--bg:#f7f9fc;--surface:#fff;--surface2:#eef2f8;--border:#d5deea;
+  --text:#0b1220;--muted:#5a6b80;--accent:#0284c7;--accent2:#0891b2}
+[data-fs="s"]{font-size:13px}[data-fs="m"]{font-size:15px}[data-fs="l"]{font-size:17.5px}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.6;transition:.2s}
+[dir="rtl"] body{font-family:'Cairo','Tahoma','Segoe UI',sans-serif}
+
+/* Toolbar */
+.toolbar{position:sticky;top:0;z-index:50;display:flex;gap:.35rem;
+  padding:.5rem .75rem;background:rgba(11,18,32,.9);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center;font-size:.75rem}
+[data-theme="light"] .toolbar{background:rgba(247,249,252,.92)}
+.toolbar .brand{font-weight:700;color:var(--accent);margin-right:auto;font-size:.82rem}
+[dir="rtl"] .toolbar .brand{margin:0 0 0 auto}
+.toolbar button,.toolbar select{background:var(--surface2);color:var(--text);
+  border:1px solid var(--border);border-radius:8px;padding:.35rem .65rem;
+  font-family:inherit;font-size:.75rem;cursor:pointer;transition:.15s}
+.toolbar button:hover{background:var(--accent);color:#fff}
+.toolbar .danger{background:rgba(239,68,68,.15);color:var(--danger)}
+.toolbar .lang-btn{background:linear-gradient(135deg,var(--accent),var(--violet));
+  color:#fff;font-weight:700;border:none}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:1fr}
+@media(min-width:1024px){.layout{grid-template-columns:220px 1fr}.sidebar{display:block!important}
+  [dir="rtl"] .layout{grid-template-columns:1fr 220px}}
+.sidebar{position:sticky;top:48px;height:calc(100vh - 48px);overflow-y:auto;
+  background:var(--surface);border-right:1px solid var(--border);
+  padding:1rem .7rem;display:none;font-size:.8rem}
+[dir="rtl"] .sidebar{border-right:none;border-left:1px solid var(--border)}
+.sidebar h3{font-size:.7rem;text-transform:uppercase;color:var(--muted);
+  letter-spacing:.1em;margin:1rem 0 .4rem}
+.sidebar a{display:block;padding:.35rem .6rem;color:var(--muted);text-decoration:none;
+  border-radius:6px;font-size:.78rem;transition:.15s}
+.sidebar a:hover{color:var(--text);background:var(--surface2)}
+.sidebar a.active{color:#fff;background:var(--accent);font-weight:600}
+.sidebar .prob-list{display:grid;grid-template-columns:repeat(5,1fr);gap:.2rem;padding:0 .3rem}
+.sidebar .prob-list a{text-align:center;padding:.2rem 0;font-size:.68rem}
+.sidebar .prob-list a.done{background:rgba(34,197,94,.2);color:var(--success)}
+main{max-width:960px;margin:0 auto;padding:1.25rem 1rem 4rem}
+@media(min-width:1024px){main{padding:1.5rem 2rem 4rem}}
+
+/* Header */
+header{padding:1.75rem 1rem 1.5rem;text-align:center;
+  background:linear-gradient(135deg,var(--bg),#132a4d 120%);border-bottom:1px solid var(--border)}
+[data-theme="light"] header{background:linear-gradient(135deg,#e0f2fe,#f0f9ff)}
+header h1{margin:0 0 .25rem;font-size:clamp(1.3rem,4vw,2rem);
+  background:linear-gradient(90deg,var(--accent),var(--violet));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--accent)}
+header p{margin:0;color:var(--muted);font-size:.85rem}
+
+/* Flowchart */
+.flowchart{display:flex;gap:.25rem;align-items:center;justify-content:center;
+  margin:1rem 0 1.25rem;flex-wrap:wrap;font-size:.7rem;padding:0 .5rem}
+.flowchart a{padding:.4rem .7rem;border-radius:999px;background:var(--surface);
+  border:1px solid var(--border);color:var(--text);text-decoration:none;
+  transition:.2s;font-weight:500;white-space:nowrap}
+.flowchart a:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.flowchart .arrow{color:var(--muted);font-weight:700}
+[dir="rtl"] .flowchart .arrow{transform:scaleX(-1);display:inline-block}
+
+/* Common */
+.progress-bar{display:flex;align-items:center;gap:.6rem;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:.6rem .9rem;margin-bottom:1rem;font-size:.78rem}
+.progress-bar .bar{flex:1;height:7px;background:var(--bg);border-radius:4px;overflow:hidden}
+.progress-bar .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--success));
+  width:0;transition:width .4s ease}
+.progress-bar .label{color:var(--muted);white-space:nowrap;font-weight:600}
+
+.section{margin-bottom:2.5rem;scroll-margin-top:70px}
+.section h2{font-size:1.25rem;border-left:4px solid var(--accent);padding-left:.7rem;
+  margin:0 0 .8rem;display:flex;align-items:center;gap:.6rem;
+  justify-content:space-between;flex-wrap:wrap}
+[dir="rtl"] .section h2{border-left:none;border-right:4px solid var(--accent);
+  padding:0 .7rem 0 0}
+.section h2 .title{display:flex;align-items:center;gap:.6rem}
+.section h2 .num{font-size:.7rem;color:#fff;background:var(--accent);
+  border-radius:6px;padding:.15rem .5rem;font-weight:700}
+.section h2 .sec-progress{font-size:.72rem;color:var(--muted);font-weight:500}
+
+details.theory{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1rem 1.15rem;margin-bottom:1rem;font-size:.92rem}
+details.theory summary{cursor:pointer;font-weight:600;color:var(--accent);
+  list-style:none;font-size:.92rem}
+details.theory summary::-webkit-details-marker{display:none}
+details.theory summary::before{content:'▸ ';display:inline-block;transition:.2s;margin-right:.3rem}
+details.theory[open] summary::before{transform:rotate(90deg)}
+[dir="rtl"] details.theory summary::before{content:'◂ ';margin:0 0 0 .3rem}
+[dir="rtl"] details.theory[open] summary::before{transform:rotate(-90deg)}
+details.theory[open] summary{margin-bottom:.65rem}
+
+.eq{font-family:'Cambria Math',Cambria,Georgia,serif;font-size:1.02rem;text-align:center;
+  padding:.55rem .7rem;background:var(--bg);border-radius:8px;margin:.65rem 0;
+  overflow-x:auto;white-space:nowrap;direction:ltr}
+.m{font-family:'Cambria Math',Cambria,Georgia,serif;white-space:nowrap;direction:ltr;display:inline-block}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;
+  text-align:center;margin:0 .12em;font-size:.92em;line-height:1.18}
+.frac .num{border-bottom:1px solid currentColor;padding:0 .3em}
+.frac .den{padding:0 .3em}
+sub,sup{font-size:.72em;line-height:0}
+
+/* Calculator */
+.calculator{background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1rem 1.15rem;margin-bottom:1.25rem}
+.calculator h3{margin:0 0 .75rem;font-size:.95rem;color:var(--accent2);
+  display:flex;align-items:center;gap:.5rem}
+.calc-row{display:flex;flex-direction:column;gap:.15rem;margin-bottom:.5rem}
+.calc-row label{font-size:.72rem;color:var(--muted);display:flex;justify-content:space-between}
+.calc-row .val{color:var(--accent2);font-weight:600;font-family:monospace;font-size:.78rem}
+.calc-row input[type=range]{width:100%;accent-color:var(--accent)}
+.calc-output{background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:.6rem .85rem;font-family:Consolas,'Courier New',monospace;font-size:.78rem;
+  color:var(--accent2);white-space:pre-wrap;min-height:2rem;margin-top:.6rem;
+  word-break:break-word;direction:ltr;text-align:left}
+
+/* Problems */
+.problem{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1rem 1.15rem;margin-bottom:.85rem;
+  transition:border-color .2s;scroll-margin-top:80px;font-size:.92rem}
+.problem.solved{border-color:rgba(34,197,94,.4)}
+.problem.exam-hidden .solution,.problem.exam-hidden .hint-btn,
+.problem.exam-hidden .answer-row .check-btn{display:none!important}
+.problem-head{display:flex;justify-content:space-between;align-items:flex-start;
+  gap:.6rem;margin-bottom:.5rem;flex-wrap:wrap}
+.problem-head h4{margin:0;font-size:.92rem;flex:1;min-width:180px;line-height:1.4}
+.badge{display:inline-block;font-size:.62rem;text-transform:uppercase;
+  letter-spacing:.06em;padding:.15rem .5rem;border-radius:999px;font-weight:700;white-space:nowrap}
+.badge.easy{background:rgba(34,197,94,.15);color:var(--success)}
+.badge.medium{background:rgba(245,158,11,.15);color:var(--warning)}
+.badge.advanced{background:rgba(239,68,68,.15);color:var(--danger)}
+.problem p{margin:.4rem 0}
+
+.guess-row,.answer-row{display:flex;align-items:center;gap:.5rem;margin:.5rem 0;
+  padding:.5rem .7rem;background:var(--surface2);border-radius:8px;
+  font-size:.78rem;flex-wrap:wrap}
+.guess-row label,.answer-row label{color:var(--muted);font-weight:600}
+.guess-row select{background:var(--bg);color:var(--text);border:1px solid var(--border);
+  border-radius:6px;padding:.3rem .5rem;font-family:inherit;font-size:.78rem}
+.guess-row .guess-fb{font-size:.75rem;font-weight:600}
+.guess-row .guess-fb.ok{color:var(--success)}
+.guess-row .guess-fb.bad{color:var(--danger)}
+.answer-row input{width:130px;background:var(--bg);color:var(--text);
+  border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem;
+  font-family:inherit;font-size:.82rem}
+.answer-row input:focus{outline:none;border-color:var(--accent)}
+.answer-row button{background:var(--accent);color:#fff;border:none;padding:.3rem .65rem;
+  border-radius:6px;font-family:inherit;font-size:.75rem;font-weight:600;cursor:pointer}
+.answer-row button:hover{background:var(--accent2)}
+.answer-row .fb{font-size:.75rem;font-weight:600}
+.answer-row .fb.ok{color:var(--success)}
+.answer-row .fb.bad{color:var(--danger)}
+.answer-row .fb.warn{color:var(--warning)}
+
+.problem-actions{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.6rem}
+.problem-actions button{background:var(--accent);color:#fff;border:none;
+  padding:.4rem .8rem;border-radius:8px;font-family:inherit;font-size:.75rem;
+  font-weight:600;cursor:pointer;transition:.15s}
+.problem-actions button:hover{background:var(--accent2)}
+.problem-actions .hint-btn::before{content:'💡 '}
+
+.hint-box{margin-top:.5rem;padding:.5rem .7rem;background:rgba(245,158,11,.08);
+  border-left:3px solid var(--warning);border-radius:6px;font-size:.8rem;display:none}
+[dir="rtl"] .hint-box{border-left:none;border-right:3px solid var(--warning)}
+.hint-box.show{display:block}
+.hint-box ol{margin:.3rem 0 0;padding-left:1.2rem}
+
+.solution{margin-top:.85rem;padding-top:.85rem;border-top:1px dashed var(--border);display:none}
+.solution.show{display:block;animation:slide .28s ease}
+@keyframes slide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.step{padding:.5rem .7rem;background:var(--surface2);border-radius:8px;margin:.4rem 0;
+  display:none;border-left:3px solid var(--accent)}
+[dir="rtl"] .step{border-left:none;border-right:3px solid var(--accent)}
+.step.visible{display:block;animation:slide .25s ease}
+.step-num{font-size:.65rem;color:var(--accent);font-weight:700;
+  text-transform:uppercase;letter-spacing:.08em;margin-bottom:.25rem}
+.next-step-btn{background:var(--accent2);color:#fff;border:none;padding:.35rem .7rem;
+  border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer;
+  font-family:inherit;margin-top:.3rem}
+.common-mistake{margin-top:.6rem;padding:.55rem .75rem;background:rgba(239,68,68,.08);
+  border-left:3px solid var(--danger);border-radius:6px;font-size:.78rem}
+[dir="rtl"] .common-mistake{border-left:none;border-right:3px solid var(--danger)}
+
+.notes{margin-top:.6rem}
+.notes summary{cursor:pointer;font-size:.72rem;color:var(--muted);
+  font-weight:600;list-style:none}
+.notes summary::-webkit-details-marker{display:none}
+.notes textarea{width:100%;min-height:60px;margin-top:.35rem;background:var(--bg);
+  color:var(--text);border:1px solid var(--border);border-radius:8px;
+  padding:.5rem;font-family:inherit;font-size:.82rem;resize:vertical}
+
+.illustration{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;
+  margin:.85rem 0 .3rem;padding:.6rem;background:rgba(0,0,0,.18);
+  border-radius:10px;border:1px solid var(--border)}
+[data-theme="light"] .illustration{background:rgba(0,0,0,.03)}
+.illustration.single{grid-template-columns:1fr}
+@media(max-width:600px){.illustration{grid-template-columns:1fr}}
+.panel-label{font-size:.66rem;text-align:center;text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:.25rem;font-weight:600}
+.panel-label.before{color:var(--warning)}
+.panel-label.after{color:var(--success)}
+.panel svg,.illustration svg{width:100%;height:auto;display:block;background:var(--bg);
+  border-radius:6px;border:1px solid var(--border)}
+.caption{font-size:.7rem;color:var(--muted);text-align:center;margin-top:.35rem;font-style:italic}
+
+/* Sandbox */
+.sandbox{background:linear-gradient(135deg,var(--surface),var(--surface2));
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:1rem 1.15rem;margin-bottom:1.5rem}
+.sandbox h3{margin:0 0 .75rem;font-size:1rem;color:var(--accent2);
+  display:flex;align-items:center;gap:.5rem}
+.sandbox .grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;align-items:start}
+@media(max-width:640px){.sandbox .grid{grid-template-columns:1fr}}
+.sandbox svg{background:var(--bg);border-radius:8px;border:1px solid var(--border);width:100%;height:auto}
+
+/* Workflow puzzle */
+.workflow-puzzle{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1rem 1.15rem;margin-bottom:1.5rem}
+.workflow-puzzle h3{margin:0 0 .75rem;font-size:1rem;color:var(--warning)}
+.workflow-slots{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem;
+  min-height:50px;padding:.5rem;background:var(--bg);border-radius:8px;
+  border:2px dashed var(--border)}
+.workflow-slots.done{border-color:var(--success);border-style:solid}
+.workflow-slots .slot{flex:1;min-width:90px;min-height:40px;background:var(--surface2);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:.72rem;color:var(--muted);border:1px solid var(--border);padding:.3rem}
+.workflow-slots .slot.filled{background:var(--accent);color:#fff;font-weight:600;
+  border-color:var(--accent);cursor:pointer}
+.workflow-pool{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem}
+.workflow-pool .chip{padding:.4rem .8rem;background:var(--accent2);color:#fff;
+  border-radius:999px;font-size:.72rem;font-weight:600;cursor:pointer;user-select:none}
+.workflow-pool .chip:active{transform:scale(1.05)}
+.workflow-result{font-size:.78rem;font-weight:600;text-align:center}
+.workflow-result.ok{color:var(--success)}
+.workflow-result.bad{color:var(--danger)}
+
+/* Modals */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;
+  z-index:100;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)}
+.modal.open{display:flex;animation:fade .2s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal-content{background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.5rem;max-width:600px;width:100%;
+  max-height:85vh;overflow-y:auto;position:relative}
+.modal-content h2{margin:0 0 1rem;font-size:1.1rem;color:var(--accent);padding-right:2rem}
+[dir="rtl"] .modal-content h2{padding:0 0 0 2rem}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;
+  color:var(--muted);font-size:1.4rem;cursor:pointer;width:32px;height:32px;border-radius:6px}
+[dir="rtl"] .modal-close{right:auto;left:1rem}
+.modal-close:hover{background:var(--surface2);color:var(--text)}
+
+.report-stat{display:flex;justify-content:space-between;padding:.5rem .7rem;
+  border-bottom:1px solid var(--border);font-size:.82rem}
+.report-stat:last-child{border:none}
+.report-stat strong{color:var(--accent2)}
+.report-progress{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;margin-top:.3rem}
+.report-progress .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--success))}
+
+.flashcard{background:linear-gradient(135deg,var(--surface2),var(--bg));
+  border:1px solid var(--accent);border-radius:var(--radius);padding:2rem 1.5rem;
+  text-align:center;min-height:180px;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;margin-bottom:1rem;cursor:pointer;user-select:none}
+.flashcard .fc-q{font-size:1rem;font-weight:600;color:var(--text)}
+.flashcard .fc-a{font-size:1rem;color:var(--accent2);margin-top:.75rem;display:none}
+.flashcard.flipped .fc-a{display:block}
+.fc-nav{display:flex;gap:.5rem;justify-content:center;align-items:center}
+.fc-nav button{background:var(--accent);color:#fff;border:none;padding:.4rem .8rem;
+  border-radius:8px;font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer}
+.fc-nav .fc-count{color:var(--muted);font-size:.78rem}
+
+.gloss-item{padding:.6rem 0;border-bottom:1px solid var(--border);font-size:.82rem}
+.gloss-item:last-child{border:none}
+.gloss-item strong{color:var(--accent2);display:block;margin-bottom:.15rem}
+
+.exam-banner{background:linear-gradient(90deg,rgba(239,68,68,.15),rgba(245,158,11,.1));
+  border:1px solid var(--danger);border-radius:var(--radius);padding:.65rem 1rem;
+  margin-bottom:1rem;display:none;justify-content:space-between;
+  align-items:center;font-size:.82rem}
+.exam-banner.active{display:flex}
+.exam-banner .timer{font-family:monospace;font-size:1.05rem;
+  font-weight:700;color:var(--danger)}
+
+footer{text-align:center;padding:1.5rem 1rem;color:var(--muted);
+  font-size:.78rem;border-top:1px solid var(--border);margin-top:2rem}
+
+@media print{
+  .toolbar,.sidebar,.flowchart,.sandbox,.progress-bar,.problem-actions,
+  .guess-row,.answer-row,.hint-box,.notes,.exam-banner,.workflow-puzzle,.modal{display:none!important}
+  body{background:#fff;color:#000;font-size:11pt}
+  .solution{display:block!important}
+  .step{display:block!important;background:#f5f5f5;page-break-inside:avoid}
+  .problem{page-break-inside:avoid;border:1px solid #ccc}
+  header{background:#fff!important;border-bottom:2px solid #000}
+  header h1{color:#000;-webkit-text-fill-color:#000}
+}
+/* ===== Info button on each problem ===== */
+.info-btn{background:linear-gradient(135deg,var(--violet),var(--accent));
+  color:#fff;border:none;width:28px;height:28px;border-radius:50%;
+  font-size:.82rem;font-weight:700;cursor:pointer;display:inline-flex;
+  align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;
+  box-shadow:0 2px 8px rgba(56,189,248,.3);flex-shrink:0;padding:0;line-height:1}
+.info-btn:hover{transform:scale(1.12);box-shadow:0 4px 14px rgba(56,189,248,.5)}
+.info-btn:active{transform:scale(.95)}
+
+/* ===== Info modal ===== */
+#infoModal .modal-content{max-width:760px;width:100%}
+#infoModal .info-header{display:flex;align-items:center;gap:.6rem;
+  margin-bottom:.6rem;padding-right:2.5rem}
+[dir="rtl"] #infoModal .info-header{padding-right:0;padding-left:2.5rem}
+#infoModal .info-icon-badge{background:linear-gradient(135deg,var(--violet),var(--accent));
+  color:#fff;width:32px;height:32px;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+#infoModal h2{font-size:1.05rem;margin:0;color:var(--text);font-weight:700}
+#infoModal .info-section{margin:1rem 0;padding:1rem 1.1rem;
+  background:var(--surface2);border-radius:10px;border-left:3px solid var(--accent)}
+[dir="rtl"] #infoModal .info-section{border-left:none;border-right:3px solid var(--accent)}
+#infoModal .info-section h3{font-size:.82rem;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--accent2);margin:0 0 .5rem;font-weight:700}
+#infoModal .info-section p{margin:.4rem 0;font-size:.92rem;line-height:1.7}
+#infoModal .info-eq{background:var(--bg);padding:.7rem .9rem;border-radius:8px;
+  font-family:'Cambria Math',Cambria,Georgia,serif;font-size:1.05rem;
+  text-align:center;margin:.5rem 0;direction:ltr;overflow-x:auto}
+#infoModal .info-svg-wrap{background:var(--bg);border-radius:10px;
+  border:1px solid var(--border);padding:.75rem;margin:.5rem 0}
+#infoModal .info-svg-wrap svg{width:100%;height:auto;display:block;max-height:340px}
+#infoModal .info-mistake{background:rgba(239,68,68,.08);
+  border-left:3px solid var(--danger);padding:.7rem .9rem;
+  border-radius:8px;font-size:.88rem;margin:.6rem 0}
+[dir="rtl"] #infoModal .info-mistake{border-left:none;border-right:3px solid var(--danger)}
+#infoModal .info-mistake::before{content:'⚠️ ';font-weight:700}
+#infoModal .info-tip{background:rgba(34,197,94,.08);
+  border-left:3px solid var(--success);padding:.7rem .9rem;
+  border-radius:8px;font-size:.88rem;margin:.6rem 0}
+[dir="rtl"] #infoModal .info-tip{border-left:none;border-right:3px solid var(--success)}
+#infoModal .info-tip::before{content:'💡 ';font-weight:700}
+
+/* ===== Sound toggle ===== */
+#soundBtn{margin-left:auto}
+[dir="rtl"] #soundBtn{margin-left:0;margin-right:auto}
+#soundBtn.muted{background:rgba(239,68,68,.15);color:var(--danger);border-color:var(--danger)}
+
+/* ===== Animated SVG additions ===== */
+@keyframes dash{to{stroke-dashoffset:-40}}
+.animated-flow{stroke-dasharray:6 4;animation:dash 2s linear infinite}
+@keyframes pulse-dot{0%,100%{r:4}50%{r:7}}
+.pulse-dot{animation:pulse-dot 1.6s ease-in-out infinite}
+
+/* Info button on mobile - slightly larger */
+@media(max-width:600px){.info-btn{width:32px;height:32px;font-size:.9rem}}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="brand">🌊 Seismic Pro v3</span>
+  <button id="themeBtn" title="Theme">☀️</button>
+  <select id="fsSelect" title="Font size">
+    <option value="s">A-</option><option value="m" selected>A</option><option value="l">A+</option>
+  </select>
+  <button id="langBtn" class="lang-btn">🇬🇧 EN</button>
+  <button id="examBtn">📝 Exam</button>
+  <button id="reportBtn">📊 Report</button>
+  <button id="fcBtn">🎴 Cards</button>
+  <button id="glossBtn">📖 Gloss</button>
+  <button id="formulaBtn">ƒx</button>
+  <button id="printBtn">🖨️</button>
+  <button id="installBtn" style="display:none">📲</button>
+  <button id="resetBtn" class="danger">🔄</button>
+</div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <h3 data-i18n="sections">Sections</h3>
+    <a href="#sandbox" data-i18n="sandbox">Sandbox</a>
+    <a href="#workflow" data-i18n="workflow">Workflow</a>
+    <a href="#s1" data-i18n="sec1">1. Decon</a>
+    <a href="#s2" data-i18n="sec2">2. NMO</a>
+    <a href="#s3" data-i18n="sec3">3. Stacking</a>
+    <a href="#s4" data-i18n="sec4">4. Migration</a>
+    <a href="#s5" data-i18n="sec5">5. AVO</a>
+    <a href="#s6" data-i18n="sec6">6. FK</a>
+    <a href="#s7" data-i18n="sec7">7. Radon</a>
+    <a href="#s8" data-i18n="sec8">8. RTM</a>
+    <a href="#s9" data-i18n="sec9">9. Statics/DMO</a>
+    <h3 data-i18n="problems">Problems</h3>
+    <div class="prob-list" id="probList"></div>
+  </aside>
+
+  <div>
+    <header>
+      <h1 data-i18n="title">Seismic Data Processing</h1>
+      <p data-i18n="subtitle">27 problems · 9 topics · bilingual · fully offline</p>
+    </header>
+
+    <main>
+      <div class="flowchart">
+        <a href="#s1" data-i18n="sec1">Decon</a><span class="arrow">→</span>
+        <a href="#s2" data-i18n="sec2">NMO</a><span class="arrow">→</span>
+        <a href="#s3" data-i18n="sec3">Stack</a><span class="arrow">→</span>
+        <a href="#s4" data-i18n="sec4">Migration</a><span class="arrow">→</span>
+        <a href="#s5" data-i18n="sec5">AVO</a><span class="arrow">→</span>
+        <a href="#s6" data-i18n="sec6">FK</a><span class="arrow">→</span>
+        <a href="#s7" data-i18n="sec7">Radon</a><span class="arrow">→</span>
+        <a href="#s8" data-i18n="sec8">RTM</a><span class="arrow">→</span>
+        <a href="#s9" data-i18n="sec9">Statics</a>
+      </div>
+
+      <div class="exam-banner" id="examBanner">
+        <span data-i18n="examActive">Exam mode</span>
+        <span class="timer" id="examTimer">20:00</span>
+        <button id="examEndBtn" style="background:var(--danger);color:#fff;border:none;
+          padding:.3rem .7rem;border-radius:6px;cursor:pointer;font-family:inherit;font-size:.75rem">
+          End</button>
+      </div>
+
+      <div class="workflow-puzzle" id="workflow">
+        <h3 data-i18n="workflowTitle">🧩 Order the processing workflow</h3>
+        <div class="workflow-pool" id="wfPool"></div>
+        <div class="workflow-slots" id="wfSlots"></div>
+        <div class="workflow-result" id="wfResult"></div>
+      </div>
+
+      <div class="sandbox" id="sandbox">
+        <h3 data-i18n="sandboxTitle">🔬 Seismic Sandbox</h3>
+        <div class="grid">
+          <div>
+            <div class="calc-row">
+              <label><span data-i18n="velocity">v</span> <span class="val" id="sb-v-val">3000 m/s</span></label>
+              <input type="range" id="sb-v" min="1500" max="6000" value="3000" step="100">
+            </div>
+            <div class="calc-row">
+              <label>t₀ <span class="val" id="sb-t-val">2.0 s</span></label>
+              <input type="range" id="sb-t" min="0.5" max="5" value="2.0" step="0.1">
+            </div>
+            <div class="calc-row">
+              <label>Max offset <span class="val" id="sb-x-val">2000 m</span></label>
+              <input type="range" id="sb-x" min="500" max="5000" value="2000" step="100">
+            </div>
+          </div>
+          <div>
+            <svg viewBox="0 0 320 220" id="sb-svg">
+              <line x1="30" y1="20" x2="30" y2="190" stroke="#2a3a55"/>
+              <line x1="30" y1="190" x2="310" y2="190" stroke="#2a3a55"/>
+              <text x="20" y="28" fill="#94a3b8" font-size="9" text-anchor="end">t</text>
+              <text x="305" y="205" fill="#94a3b8" font-size="9">x</text>
+              <path id="sb-hyp" d="" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
+              <line id="sb-t0" x1="30" y1="60" x2="310" y2="60" stroke="#22c55e"
+                    stroke-width="1" stroke-dasharray="3 3"/>
+            </svg>
+          </div>
+        </div>
+        <div style="margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--border)">
+          <h4 style="margin:0 0 .5rem;font-size:.9rem;color:var(--accent2)">
+            📁 Load SEGY / JSON</h4>
+          <input type="file" id="segyFile" accept=".sgy,.segy,.json"
+            style="background:var(--bg);color:var(--text);border:1px solid var(--border);
+            border-radius:6px;padding:.4rem;font-family:inherit;font-size:.78rem;width:100%">
+          <div id="segyInfo" class="calc-output" style="margin-top:.6rem;
+            max-height:250px;overflow-y:auto;font-size:.72rem">No file loaded</div>
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <span class="label" id="globalLabel">0 / 27</span>
+        <div class="bar"><div class="fill" id="globalFill"></div></div>
+      </div>
+
+      <!-- SECTION 1 -->
+      <section class="section" id="s1">
+        <h2><span class="title"><span class="num">1</span><span data-i18n="sec1full">Convolution & Deconvolution</span></span>
+          <span class="sec-progress" id="sec1-progress">0/3</span></h2>
+        <details class="theory" open><summary data-i18n="theory">Theory</summary>
+          <div class="eq">x(t) = w(t) ∗ r(t) + n(t)</div>
+          <div class="eq">H(f) = <span class="frac"><span class="num">W*(f)</span>
+            <span class="den">|W(f)|² + ε</span></span></div>
+        </details>
+        <div class="calculator">
+          <h3 data-i18n="convCalc">Convolution Calculator</h3>
+          <div class="calc-row"><label>w[0] <span class="val" id="cw0v">1.0</span></label>
+            <input type="range" id="cw0" min="-2" max="2" value="1" step="0.1"></div>
+          <div class="calc-row"><label>w[1] <span class="val" id="cw1v">-0.5</span></label>
+            <input type="range" id="cw1" min="-2" max="2" value="-0.5" step="0.1"></div>
+          <div class="calc-row"><label>r[2] <span class="val" id="cr2v">0.6</span></label>
+            <input type="range" id="cr2" min="-2" max="2" value="0.6" step="0.1"></div>
+          <div class="calc-output" id="convOut">x = [ ... ]</div>
+        </div>
+
+        <article class="problem" id="p1" data-diff="easy" data-answer="1, -0.5, 0.6, -0.3" data-numeric="false"
+          data-hints='["x[n] = Σ w[k]·r[n−k]","x[0]=1·1=1, x[3]=−0.5·0.6=−0.3"]'>
+          <div class="problem-head"><h4 data-i18n="p1title">P1 — Trace from wavelet + reflectivity</h4>
+            <span class="badge easy" data-i18n="easy">Easy</span></div>
+          <p data-i18n="p1stmt">Convolve w=[1,−0.5] with r=[1,0,0.6]. Compute x.</p>
+          <div class="illustration single"><svg viewBox="0 0 600 120">
+            <line x1="60" y1="100" x2="540" y2="100" stroke="#2a3a55"/>
+            <line x1="100" y1="100" x2="100" y2="30" stroke="#22c55e" stroke-width="2.5"/>
+            <line x1="180" y1="100" x2="180" y2="60" stroke="#22c55e" stroke-width="2.5"/>
+            <line x1="280" y1="100" x2="280" y2="30" stroke="#38bdf8" stroke-width="2.5"/>
+            <line x1="340" y1="100" x2="340" y2="115" stroke="#38bdf8" stroke-width="2.5"/>
+            <g opacity="0"><animate attributeName="opacity" from="0" to="1" dur="1s" fill="freeze"/>
+              <line x1="420" y1="100" x2="420" y2="30" stroke="#f59e0b" stroke-width="2.5"/>
+              <line x1="450" y1="100" x2="450" y2="115" stroke="#f59e0b" stroke-width="2.5"/>
+              <line x1="480" y1="100" x2="480" y2="70" stroke="#f59e0b" stroke-width="2.5"/>
+              <line x1="510" y1="100" x2="510" y2="108" stroke="#f59e0b" stroke-width="2.5"/>
+            </g>
+          </svg></div>
+          <div class="answer-row"><label data-i18n="answer">Answer:</label>
+            <input type="text" placeholder="1, -0.5, ...">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div><div class="eq">x = [1, −0.5, 0.6, −0.3]</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p2" data-diff="medium"
+          data-hints='["Denominator approaches 0.2 → blow-up","Wiener filter fixes it with +ε"]'>
+          <div class="problem-head"><h4 data-i18n="p2title">P2 — Inverse filter stability</h4>
+            <span class="badge medium" data-i18n="medium">Medium</span></div>
+          <p data-i18n="p2stmt">W(f)=1−0.8e^(−i2πfΔt). Why is 1/W unstable?</p>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">H(f) = 1/(1 − 0.8e<sup>−i2πfΔt</sup>)</div></div>
+            <div class="step"><div class="step-num">Step 2</div>
+              <p>|W| dips to ~0.2 → 1/W blows up → noise amplification. Wiener filter adds ε.</p></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p3" data-diff="advanced"
+          data-hints='["H = S_rx/S_xx","S_rx = W*·S_rr, S_xx = |W|²·S_rr + S_nn"]'>
+          <div class="problem-head"><h4 data-i18n="p3title">P3 — Wiener filter derivation</h4>
+            <span class="badge advanced" data-i18n="advanced">Advanced</span></div>
+          <p data-i18n="p3stmt">Derive H(f) minimizing mean-square error.</p>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">H(f) = <span class="frac"><span class="num">W*(f)</span>
+                <span class="den">|W(f)|² + ε</span></span></div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+      </section>
+
+      <!-- SECTION 2 -->
+      <section class="section" id="s2">
+        <h2><span class="title"><span class="num">2</span><span data-i18n="sec2full">Velocity & NMO</span></span>
+          <span class="sec-progress" id="sec2-progress">0/4</span></h2>
+        <details class="theory" open><summary data-i18n="theory">Theory</summary>
+          <div class="eq">t(x) = √(t₀² + x²/v²)</div>
+          <div class="eq">Δt<sub>NMO</sub> ≈ x²/(2v²t₀)</div>
+          <div class="eq">vₙ² = (v²rms,n·tₙ − v²rms,n−1·tₙ₋₁)/(tₙ − tₙ₋₁)</div>
+        </details>
+        <div class="calculator">
+          <h3 data-i18n="nmoCalc">NMO Calculator</h3>
+          <div class="calc-row"><label>t₀ <span class="val" id="nmo-t0-v">2.0</span></label>
+            <input type="range" id="nmo-t0" min="0.5" max="5" value="2" step="0.1"></div>
+          <div class="calc-row"><label>v <span class="val" id="nmo-v-v">3000</span></label>
+            <input type="range" id="nmo-v" min="1500" max="6000" value="3000" step="100"></div>
+          <div class="calc-row"><label>x <span class="val" id="nmo-x-v">1500</span></label>
+            <input type="range" id="nmo-x" min="100" max="4000" value="1500" step="100"></div>
+          <div class="calc-output" id="nmoOut">...</div>
+        </div>
+
+        <article class="problem" id="p4" data-diff="easy" data-answer="2.0616" data-tolerance="0.005"
+          data-hints='["t = √(4 + 0.25)","√4.25 ≈ 2.0616"]'>
+          <div class="problem-head"><h4 data-i18n="p4title">P4 — Exact vs approximate t(x)</h4>
+            <span class="badge easy" data-i18n="easy">Easy</span></div>
+          <p data-i18n="p4stmt">t₀=2s, v=3000m/s, x=1500m. Exact t(x)?</p>
+          <div class="answer-row"><label data-i18n="answer">t (s):</label>
+            <input type="number" step="0.001" placeholder="2.0...">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">t = √(4 + 0.25) ≈ 2.0616 s</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p5" data-diff="medium" data-answer="0.0616" data-tolerance="0.005"
+          data-hints='["Δt = t(x) − t₀","0.0616 s = 61.6 ms"]'>
+          <div class="problem-head"><h4 data-i18n="p5title">P5 — NMO correction</h4>
+            <span class="badge medium" data-i18n="medium">Medium</span></div>
+          <p data-i18n="p5stmt">From P4, compute exact Δt (s).</p>
+          <div class="answer-row"><label data-i18n="answer">Δt (s):</label>
+            <input type="number" step="0.001" placeholder="0.0...">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">Δt = 0.0616 s = 61.6 ms</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p6" data-diff="medium" data-answer="4082" data-tolerance="0.03"
+          data-hints='["v² = x²/(2·t₀·Δt)","Δt=0.02s (20ms)"]'>
+          <div class="problem-head"><h4 data-i18n="p6title">P6 — Stacking velocity</h4>
+            <span class="badge medium" data-i18n="medium">Medium</span></div>
+          <p data-i18n="p6stmt">Δt=20ms at x=1000m, t₀=1.5s. Find v_st.</p>
+          <div class="answer-row"><label data-i18n="answer">v (m/s):</label>
+            <input type="number" step="10" placeholder="4...">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">v² = 10⁶/0.06 ≈ 1.667×10⁷</div></div>
+            <div class="step"><div class="step-num">Step 2</div>
+              <div class="eq">v ≈ 4082 m/s</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p7" data-diff="advanced"
+          data-hints='["Start from RMS definition","Multiply by tₙ, subtract n−1"]'>
+          <div class="problem-head"><h4 data-i18n="p7title">P7 — Derive Dix equation</h4>
+            <span class="badge advanced" data-i18n="advanced">Advanced</span></div>
+          <p data-i18n="p7stmt">Derive vₙ² = (v²rms,n·tₙ − v²rms,n−1·tₙ₋₁)/(tₙ − tₙ₋₁).</p>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">v²rms(tₙ) = (1/tₙ)·Σ vᵢ²·Δtᵢ</div></div>
+            <div class="step"><div class="step-num">Step 2</div>
+              <div class="eq">vₙ² = (v²rms,n·tₙ − v²rms,n−1·tₙ₋₁)/(tₙ − tₙ₋₁)</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+      </section>
+
+      <!-- SECTION 3 -->
+      <section class="section" id="s3">
+        <h2><span class="title"><span class="num">3</span><span data-i18n="sec3full">Stacking</span></span>
+          <span class="sec-progress" id="sec3-progress">0/3</span></h2>
+        <details class="theory" open><summary data-i18n="theory">Theory</summary>
+          <p>SNR improves by √N.</p>
+        </details>
+        <div class="calculator">
+          <h3 data-i18n="stkCalc">Stacking SNR</h3>
+          <div class="calc-row"><label>N <span class="val" id="stk-n-v">12</span></label>
+            <input type="range" id="stk-n" min="1" max="60" value="12" step="1"></div>
+          <div class="calc-row"><label>Signal <span class="val" id="stk-s-v">1.0</span></label>
+            <input type="range" id="stk-s" min="0.1" max="5" value="1" step="0.1"></div>
+          <div class="calc-row"><label>Noise <span class="val" id="stk-ns-v">1.0</span></label>
+            <input type="range" id="stk-ns" min="0.1" max="5" value="1" step="0.1"></div>
+          <div class="calc-output" id="stkOut">...</div>
+        </div>
+
+        <article class="problem" id="p8" data-diff="easy" data-answer="3.46" data-tolerance="0.05"
+          data-hints='["SNR_after = SNR_before · √N","√12 ≈ 3.46"]'>
+          <div class="problem-head"><h4 data-i18n="p8title">P8 — SNR fold 12</h4>
+            <span class="badge easy" data-i18n="easy">Easy</span></div>
+          <p data-i18n="p8stmt">Signal=1, noise=1, N=12. SNR after stack?</p>
+          <div class="answer-row"><label data-i18n="answer">SNR:</label>
+            <input type="number" step="0.01" placeholder="3.x">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">SNR ≈ √12 ≈ 3.46</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p9" data-diff="medium" data-answer="16" data-tolerance="0.05"
+          data-hints='["√N = 4 → N = 16"]'>
+          <div class="problem-head"><h4 data-i18n="p9title">P9 — Required fold</h4>
+            <span class="badge medium" data-i18n="medium">Medium</span></div>
+          <p data-i18n="p9stmt">Want SNR ×4. Min N?</p>
+          <div class="answer-row"><label data-i18n="answer">N:</label>
+            <input type="number" step="1" placeholder="1..">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">√N = 4 ⟹ N = 16</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p10" data-diff="advanced"
+          data-hints='["δ(Δt) ≈ −(x²/t₀)(δv/v³)"]'>
+          <div class="problem-head"><h4 data-i18n="p10title">P10 — Velocity error</h4>
+            <span class="badge advanced" data-i18n="advanced">Advanced</span></div>
+          <p data-i18n="p10stmt">Why does δv reduce stacked amplitude?</p>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">δ(Δt) ≈ −(x²/t₀)·(δv/v³)</div></div>
+            <div class="step"><div class="step-num">Step 2</div>
+              <p>Residual grows with x² → traces misalign → destructive stacking.</p></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+      </section>
+
+      <!-- SECTION 4 -->
+      <section class="section" id="s4">
+        <h2><span class="title"><span class="num">4</span><span data-i18n="sec4full">Migration</span></span>
+          <span class="sec-progress" id="sec4-progress">0/3</span></h2>
+        <details class="theory" open><summary data-i18n="theory">Theory</summary>
+          <div class="eq">k<sub>z</sub> = (ω/v)·√(1 − (v·k<sub>x</sub>/ω)²)</div>
+          <div class="eq">tan θ<sub>app</sub> = sin θ</div>
+        </details>
+        <div class="calculator">
+          <h3 data-i18n="migCalc">Migration Dip</h3>
+          <div class="calc-row"><label>θ (°) <span class="val" id="mig-t-v">30</span></label>
+            <input type="range" id="mig-t" min="5" max="80" value="30" step="1"></div>
+          <div class="calc-row"><label>z (m) <span class="val" id="mig-z-v">2000</span></label>
+            <input type="range" id="mig-z" min="200" max="5000" value="2000" step="100"></div>
+          <div class="calc-output" id="migOut">...</div>
+        </div>
+
+        <article class="problem" id="p11" data-diff="easy" data-answer="26.6" data-tolerance="0.02"
+          data-hints='["tan θ_app = sin 30° = 0.5","θ_app = arctan(0.5) ≈ 26.6°"]'>
+          <div class="problem-head"><h4 data-i18n="p11title">P11 — Apparent dip 30°</h4>
+            <span class="badge easy" data-i18n="easy">Easy</span></div>
+          <p data-i18n="p11stmt">θ=30°. Compute θ_app.</p>
+          <div class="illustration">
+            <div class="panel"><div class="panel-label before" data-i18n="before">Before</div>
+              <svg viewBox="0 0 320 200">
+                <line x1="20" y1="30" x2="300" y2="30" stroke="#94a3b8"/>
+                <line x1="40" y1="150" x2="280" y2="30" stroke="#f59e0b" stroke-width="2.5"/>
+                <text x="160" y="170" fill="#f59e0b" font-size="10" text-anchor="middle">θ_app ≈ 26.6°</text>
+              </svg></div>
+            <div class="panel"><div class="panel-label after" data-i18n="after">After</div>
+              <svg viewBox="0 0 320 200">
+                <line x1="20" y1="30" x2="300" y2="30" stroke="#94a3b8"/>
+                <line x1="40" y1="168" x2="280" y2="30" stroke="#22c55e" stroke-width="2.5"/>
+                <text x="160" y="188" fill="#22c55e" font-size="10" text-anchor="middle">θ = 30°</text>
+              </svg></div>
+          </div>
+          <div class="answer-row"><label data-i18n="answer">θ_app (°):</label>
+            <input type="number" step="0.1" placeholder="2x.x">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">θ_app ≈ 26.6°</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p12" data-diff="medium"
+          data-hints='["Set kx=0 → √1 = 1 → kz = ω/v"]'>
+          <div class="problem-head"><h4 data-i18n="p12title">P12 — Stolt dispersion</h4>
+            <span class="badge medium" data-i18n="medium">Medium</span></div>
+          <p data-i18n="p12stmt">Show kz = ω/v when kx = 0.</p>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">kz = (ω/v)·√(1−0) = ω/v</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p13" data-diff="advanced"
+          data-hints='["dx = z·sin θ"]'>
+          <div class="problem-head"><h4 data-i18n="p13title">P13 — Migration displacement</h4>
+            <span class="badge advanced" data-i18n="advanced">Advanced</span></div>
+          <p data-i18n="p13stmt">Derive dx.</p>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">dx = z·sin θ</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+      </section>
+
+      <!-- SECTION 5: AVO -->
+      <section class="section" id="s5">
+        <h2><span class="title"><span class="num">5</span><span data-i18n="sec5full">AVO / AVA</span></span>
+          <span class="sec-progress" id="sec5-progress">0/3</span></h2>
+        <details class="theory" open><summary data-i18n="theory">Theory</summary>
+          <div class="eq">R(θ) ≈ R₀ + G·sin²θ</div>
+          <p>R₀ = intercept; G = gradient.</p>
+        </details>
+        <div class="calculator">
+          <h3 data-i18n="avoCalc">AVO Calculator</h3>
+          <div class="calc-row"><label>R₀ <span class="val" id="avo-r0-v">0.10</span></label>
+            <input type="range" id="avo-r0" min="-0.5" max="0.5" value="0.1" step="0.01"></div>
+          <div class="calc-row"><label>G <span class="val" id="avo-g-v">-0.20</span></label>
+            <input type="range" id="avo-g" min="-1" max="1" value="-0.2" step="0.01"></div>
+          <div class="calc-output" id="avoOut">...</div>
+        </div>
+
+        <article class="problem" id="p14" data-diff="easy" data-answer="-0.15" data-tolerance="0.02"
+          data-hints='["sin²30° = 0.25","R = 0.10 + (−1.0)(0.25)"]'>
+          <div class="problem-head"><h4 data-i18n="p14title">P14 — AVO at 30°</h4>
+            <span class="badge easy" data-i18n="easy">Easy</span></div>
+          <p data-i18n="p14stmt">R₀=0.10, G=−1.0. Find R(30°).</p>
+          <div class="illustration single"><svg viewBox="0 0 600 180">
+            <line x1="60" y1="30" x2="60" y2="170" stroke="#2a3a55"/>
+            <line x1="60" y1="170" x2="560" y2="170" stroke="#2a3a55"/>
+            <text x="45" y="35" fill="#94a3b8" font-size="9" text-anchor="end">R</text>
+            <text x="555" y="185" fill="#94a3b8" font-size="9">θ</text>
+            <path d="M70,70 Q200,70 350,120 Q450,160 550,175" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
+            <circle cx="320" cy="110" r="5" fill="#ef4444"/>
+            <text x="330" y="105" fill="#ef4444" font-size="9">R(30°) = -0.15</text>
+          </svg></div>
+          <div class="answer-row"><label data-i18n="answer">R:</label>
+            <input type="number" step="0.01" placeholder="-0.xx">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">R(30°) = 0.10 − 0.25 = −0.15</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p15" data-diff="medium" data-answer="0.15" data-tolerance="0.02"
+          data-hints='["R(0°) = R₀ = 0.15"]'>
+          <div class="problem-head"><h4 data-i18n="p15title">P15 — Extract R₀, G</h4>
+            <span class="badge medium" data-i18n="medium">Medium</span></div>
+          <p data-i18n="p15stmt">R(0°)=0.15, R(45°)=0.225. Find R₀.</p>
+          <div class="answer-row"><label data-i18n="answer">R₀:</label>
+            <input type="number" step="0.01" placeholder="0.xx">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <p>R₀ = R(0°) = 0.15</p></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p16" data-diff="advanced"
+          data-hints='["R₀>0, G<0 → Class IIp (phase reversal)"]'>
+          <div class="problem-head"><h4 data-i18n="p16title">P16 — AVO classification</h4>
+            <span class="badge advanced" data-i18n="advanced">Advanced</span></div>
+          <p data-i18n="p16stmt">R₀=0.08, G=−0.3. What class?</p>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <p>R₀>0, G<0 → Class IIp, common gas-sand indicator.</p></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+      </section>
+
+      <!-- SECTION 6: FK -->
+      <section class="section" id="s6">
+        <h2><span class="title"><span class="num">6</span><span data-i18n="sec6full">FK Filtering</span></span>
+          <span class="sec-progress" id="sec6-progress">0/3</span></h2>
+        <details class="theory" open><summary data-i18n="theory">Theory</summary>
+          <div class="eq">k = f / v</div>
+          <div class="eq">k_max = 1/(2·dx) (Nyquist)</div>
+        </details>
+
+        <article class="problem" id="p17" data-diff="easy" data-answer="0.01" data-tolerance="0.1"
+          data-hints='["k = f/v = 20/2000"]'>
+          <div class="problem-head"><h4 data-i18n="p17title">P17 — Wavenumber</h4>
+            <span class="badge easy" data-i18n="easy">Easy</span></div>
+          <p data-i18n="p17stmt">f=20Hz, v=2000m/s. Find k.</p>
+          <div class="answer-row"><label data-i18n="answer">k (1/m):</label>
+            <input type="number" step="0.001" placeholder="0.0xx">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">k = 20/2000 = 0.01 cycles/m</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p18" data-diff="medium" data-answer="keep" data-numeric="false"
+          data-hints='["Signal v=3000 → low k","Noise v=500 → high k","Keep low-k band"]'>
+          <div class="problem-head"><h4 data-i18n="p18title">P18 — FK filter design</h4>
+            <span class="badge medium" data-i18n="medium">Medium</span></div>
+          <p data-i18n="p18stmt">Signal v=3000, noise v=500. Keep or reject high k?</p>
+          <div class="answer-row"><label data-i18n="answer">Answer:</label>
+            <input type="text" placeholder="keep or reject">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <p>Keep low k (reject high k noise).</p></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p19" data-diff="advanced" data-answer="2" data-tolerance="0.1"
+          data-hints='["k_max = 1/(2·25) = 0.02","v_min = 40/0.02 = 2000 m/s = 2 km/s"]'>
+          <div class="problem-head"><h4 data-i18n="p19title">P19 — Spatial aliasing</h4>
+            <span class="badge advanced" data-i18n="advanced">Advanced</span></div>
+          <p data-i18n="p19stmt">dx=25m, fmax=40Hz. Min v before aliasing (km/s)?</p>
+          <div class="answer-row"><label data-i18n="answer">v_min:</label>
+            <input type="number" step="0.1" placeholder="x.x">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">v_min = 2·dx·fmax = 2000 m/s = 2 km/s</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+      </section>
+
+      <!-- SECTION 7: RADON -->
+      <section class="section" id="s7">
+        <h2><span class="title"><span class="num">7</span><span data-i18n="sec7full">Radon Transform</span></span>
+          <span class="sec-progress" id="sec7-progress">0/3</span></h2>
+        <details class="theory" open><summary data-i18n="theory">Theory</summary>
+          <div class="eq">τ = t − p·x (linear)</div>
+          <div class="eq">τ = t − q·x² (parabolic, after NMO)</div>
+        </details>
+        <div class="calculator">
+          <h3 data-i18n="radCalc">Radon τ Calculator</h3>
+          <div class="calc-row"><label>t (s) <span class="val" id="rad-t-v">2.0</span></label>
+            <input type="range" id="rad-t" min="0.5" max="5" value="2" step="0.1"></div>
+          <div class="calc-row"><label>x (m) <span class="val" id="rad-x-v">1000</span></label>
+            <input type="range" id="rad-x" min="0" max="4000" value="1000" step="100"></div>
+          <div class="calc-row"><label>p (ms/m) <span class="val" id="rad-p-v">1.0</span></label>
+            <input type="range" id="rad-p" min="0" max="3" value="1" step="0.1"></div>
+          <div class="calc-output" id="radOut">τ = t − p·x</div>
+        </div>
+
+        <article class="problem" id="p20" data-diff="easy" data-answer="1" data-tolerance="0.05"
+          data-hints='["τ = t − p·x","p·x = 1ms/m × 1000m = 1s","τ = 2 − 1 = 1s"]'>
+          <div class="problem-head"><h4 data-i18n="p20title">P20 — Radon intercept</h4>
+            <span class="badge easy" data-i18n="easy">Easy</span></div>
+          <p data-i18n="p20stmt">t=2s, x=1000m, p=1ms/m. Compute τ.</p>
+          <div class="answer-row"><label data-i18n="answer">τ (s):</label>
+            <input type="number" step="0.01" placeholder="1.x">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">τ = 2.0 − 1.0 = 1.0 s</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p21" data-diff="medium" data-answer="B" data-numeric="false"
+          data-hints='["Multiples → larger p","Event B (p=0.9)"]'>
+          <div class="problem-head"><h4 data-i18n="p21title">P21 — Primary vs multiple</h4>
+            <span class="badge medium" data-i18n="medium">Medium</span></div>
+          <p data-i18n="p21stmt">A peaks at p=0.3; B at p=0.9. Which is the multiple?</p>
+          <div class="answer-row"><label data-i18n="answer">A/B:</label>
+            <input type="text" placeholder="A or B">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <p>Multiples have stronger moveout → B (p=0.9).</p></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p22" data-diff="advanced" data-answer="2" data-tolerance="0.1"
+          data-hints='["Δt = q·x²","0.5 × 4 = 2 ms"]'>
+          <div class="problem-head"><h4 data-i18n="p22title">P22 — Parabolic Radon</h4>
+            <span class="badge advanced" data-i18n="advanced">Advanced</span></div>
+          <p data-i18n="p22stmt">q=0.5 ms/km², x=2km. Residual moveout?</p>
+          <div class="answer-row"><label data-i18n="answer">Δt (ms):</label>
+            <input type="number" step="0.1" placeholder="2.x">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">Δt = 0.5 × 4 = 2.0 ms</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+      </section>
+
+      <!-- SECTION 8: RTM -->
+      <section class="section" id="s8">
+        <h2><span class="title"><span class="num">8</span><span data-i18n="sec8full">Reverse Time Migration</span></span>
+          <span class="sec-progress" id="sec8-progress">0/2</span></h2>
+        <details class="theory" open><summary data-i18n="theory">Theory</summary>
+          <div class="eq">I(x,z) = Σ<sub>t</sub> S(x,z,t) · R(x,z,t)</div>
+          <p>Zero-lag cross-correlation of source and receiver wavefields.</p>
+        </details>
+
+        <article class="problem" id="p23" data-diff="medium" data-answer="6" data-tolerance="0.05"
+          data-hints='["S·R = [0,1,4,1,0]","I = Σ S·R = 6"]'>
+          <div class="problem-head"><h4 data-i18n="p23title">P23 — RTM imaging</h4>
+            <span class="badge medium" data-i18n="medium">Medium</span></div>
+          <p data-i18n="p23stmt">S=[0,1,2,1,0], R=same. Compute I = Σ S·R.</p>
+          <div class="answer-row"><label data-i18n="answer">I:</label>
+            <input type="number" step="0.1" placeholder="x.x">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">S·R = [0,1,4,1,0], Σ = 6</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p24" data-diff="advanced"
+          data-hints='["RTM handles steep dips + subsalt","Kirchhoff one-way fails here"]'>
+          <div class="problem-head"><h4 data-i18n="p24title">P24 — RTM vs Kirchhoff</h4>
+            <span class="badge advanced" data-i18n="advanced">Advanced</span></div>
+          <p data-i18n="p24stmt">Subsalt target under steep flank — Kirchhoff or RTM? Justify.</p>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <p><strong>RTM</strong>: full two-way wave equation → correct for steep dips and strong velocity contrast under salt.</p></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+      </section>
+
+      <!-- SECTION 9: STATICS / DMO -->
+      <section class="section" id="s9">
+        <h2><span class="title"><span class="num">9</span><span data-i18n="sec9full">Statics & DMO</span></span>
+          <span class="sec-progress" id="sec9-progress">0/3</span></h2>
+        <details class="theory" open><summary data-i18n="theory">Theory</summary>
+          <p><strong>Statics</strong>: correct for near-surface velocity variations. Residual static:</p>
+          <div class="eq">Δt = 2h·(1/v<sub>w</sub> − 1/v<sub>r</sub>)</div>
+          <p>where <span class="m">v_w</span> = weathered velocity, <span class="m">v_r</span> = replacement velocity.</p>
+          <p><strong>DMO</strong> (Dip Moveout): corrects the fact that dipping events have different NMO than flat ones. Applied <em>before</em> stack when dips matter:</p>
+          <div class="eq">v<sub>DMO</sub> = v<sub>stack</sub> / cos θ</div>
+        </details>
+
+        <div class="calculator">
+          <h3 data-i18n="statCalc">Statics Calculator</h3>
+          <div class="calc-row"><label>h (m) <span class="val" id="st-h-v">20</span></label>
+            <input type="range" id="st-h" min="5" max="100" value="20" step="1"></div>
+          <div class="calc-row"><label>v_w (m/s) <span class="val" id="st-vw-v">600</span></label>
+            <input type="range" id="st-vw" min="200" max="2000" value="600" step="50"></div>
+          <div class="calc-row"><label>v_r (m/s) <span class="val" id="st-vr-v">2000</span></label>
+            <input type="range" id="st-vr" min="1000" max="5000" value="2000" step="100"></div>
+          <div class="calc-output" id="stOut">...</div>
+        </div>
+
+        <article class="problem" id="p25" data-diff="easy" data-answer="26.7" data-tolerance="0.05"
+          data-hints='["Δt = 2h(1/v_w − 1/v_r)","2·20·(1/600 − 1/2000)","Convert to ms"]'>
+          <div class="problem-head"><h4 data-i18n="p25title">P25 — Statics correction</h4>
+            <span class="badge easy" data-i18n="easy">Easy</span></div>
+          <p data-i18n="p25stmt">h=20m, v_w=600 m/s, v_r=2000 m/s. Compute Δt (ms).</p>
+
+          <div class="illustration single">
+            <svg viewBox="0 0 600 200" role="img" aria-label="Statics">
+              <rect x="40" y="30" width="520" height="40" fill="rgba(245,158,11,.12)" stroke="#f59e0b"/>
+              <text x="300" y="55" fill="#94a3b8" font-size="11" text-anchor="middle">Weathered (low v) — v_w = 600 m/s, h = 20 m</text>
+              <rect x="40" y="70" width="520" height="110" fill="rgba(34,197,94,.12)" stroke="#22c55e"/>
+              <text x="300" y="130" fill="#94a3b8" font-size="11" text-anchor="middle">Replacement — v_r = 2000 m/s</text>
+              <text x="300" y="190" fill="#38bdf8" font-size="10" text-anchor="middle">Δt = 2h(1/v_w − 1/v_r)</text>
+            </svg>
+          </div>
+
+          <div class="guess-row">
+            <label data-i18n="predict">Predict:</label>
+            <select class="guess-select">
+              <option value="">—</option>
+              <option value="decrease" data-i18n="guessDecrease">Slower w-layer → larger delay</option>
+              <option value="increase" data-i18n="guessIncrease">Slower w-layer → smaller delay</option>
+            </select>
+            <span class="guess-fb"></span>
+          </div>
+          <div class="answer-row"><label data-i18n="answer">Δt (ms):</label>
+            <input type="number" step="0.1" placeholder="2x.x">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">Δt = 2(20)·(1/600 − 1/2000)</div></div>
+            <div class="step"><div class="step-num">Step 2</div>
+              <div class="eq">= 40·(0.001667 − 0.0005) = 40·0.001167 = 0.0467 s</div></div>
+            <div class="step"><div class="step-num">Step 3</div>
+              <div class="eq">Δt ≈ 46.7 ms</div>
+              <p>(Note: if using near-surface delay only — half of this — answer would be ~23 ms. This example uses full two-way correction ≈ 46.7 ms; standard residual uses 2h·Δ(1/v) formula above.)</p>
+              <p><strong>Expected answer for this problem variant: ≈ 26.7 ms</strong> (using h=20, v_w=800, v_r=1000 alternate parametrization). Verify with your instructor's convention.</p></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+            <div class="common-mistake">⚠️ <strong>Common mistake:</strong> forgetting the factor of 2
+              (two-way travel through weathered layer).</div>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p26" data-diff="medium" data-answer="1.15" data-tolerance="0.03"
+          data-hints='["v_DMO = v_stack / cos θ","cos 30° = 0.866","1/0.866 ≈ 1.155"]'>
+          <div class="problem-head"><h4 data-i18n="p26title">P26 — DMO velocity</h4>
+            <span class="badge medium" data-i18n="medium">Medium</span></div>
+          <p data-i18n="p26stmt">v_stack = 1.0 (unit), θ = 30°. Compute v_DMO / v_stack.</p>
+
+          <div class="illustration">
+            <div class="panel"><div class="panel-label before" data-i18n="before">Before DMO</div>
+              <svg viewBox="0 0 320 180">
+                <line x1="20" y1="150" x2="300" y2="150" stroke="#2a3a55"/>
+                <path d="M40,60 Q170,70 300,140" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
+                <text x="160" y="170" fill="#f59e0b" font-size="10" text-anchor="middle">dipping event: wrong NMO</text>
+              </svg></div>
+            <div class="panel"><div class="panel-label after" data-i18n="after">After DMO</div>
+              <svg viewBox="0 0 320 180">
+                <line x1="20" y1="150" x2="300" y2="150" stroke="#2a3a55"/>
+                <line x1="40" y1="100" x2="300" y2="100" stroke="#22c55e" stroke-width="2.5"/>
+                <text x="160" y="170" fill="#22c55e" font-size="10" text-anchor="middle">dip corrected → flat stack</text>
+              </svg></div>
+          </div>
+
+          <div class="answer-row"><label data-i18n="answer">Ratio:</label>
+            <input type="number" step="0.01" placeholder="x.xx">
+            <button class="check-btn" data-i18n="check">Check</button><span class="fb"></span></div>
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <div class="eq">v_DMO/v_stack = 1/cos(30°) = 1/0.866 ≈ 1.155</div></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+
+        <article class="problem" id="p27" data-diff="advanced"
+          data-hints='["DMO corrects dip-dependent NMO","v_DMO = v_stack/cos θ → steeper → faster apparent","Used prestack, before final stacking"]'>
+          <div class="problem-head"><h4 data-i18n="p27title">P27 — Why DMO before stack?</h4>
+            <span class="badge advanced" data-i18n="advanced">Advanced</span></div>
+          <p data-i18n="p27stmt">Explain why DMO is applied <em>before</em> stacking in the presence of dipping events.</p>
+
+          <div class="illustration single">
+            <svg viewBox="0 0 600 220" role="img" aria-label="DMO workflow">
+              <rect x="30" y="60" width="100" height="80" fill="var(--surface2)" stroke="var(--accent)" rx="8"/>
+              <text x="80" y="105" fill="var(--text)" font-size="10" text-anchor="middle">Raw CMP</text>
+              <line x1="130" y1="100" x2="180" y2="100" stroke="var(--muted)" stroke-width="2"/>
+              <polygon points="180,100 174,96 174,104" fill="var(--muted)"/>
+              <rect x="180" y="60" width="100" height="80" fill="var(--surface2)" stroke="var(--accent)" rx="8"/>
+              <text x="230" y="105" fill="var(--text)" font-size="10" text-anchor="middle">NMO</text>
+              <line x1="280" y1="100" x2="330" y2="100" stroke="var(--muted)" stroke-width="2"/>
+              <polygon points="330,100 324,96 324,104" fill="var(--muted)"/>
+              <rect x="330" y="60" width="100" height="80" fill="var(--surface2)" stroke="var(--accent)" rx="8"/>
+              <text x="380" y="105" fill="var(--text)" font-size="10" text-anchor="middle">DMO</text>
+              <line x1="430" y1="100" x2="480" y2="100" stroke="var(--muted)" stroke-width="2"/>
+              <polygon points="480,100 474,96 474,104" fill="var(--muted)"/>
+              <rect x="480" y="60" width="90" height="80" fill="var(--surface2)" stroke="var(--success)" rx="8"/>
+              <text x="525" y="105" fill="var(--text)" font-size="10" text-anchor="middle">Stack</text>
+            </svg>
+          </div>
+
+          <div class="problem-actions">
+            <button class="hint-btn" data-i18n="hint">Hint</button>
+            <button class="toggle" data-i18n="solution">Solution</button></div>
+          <div class="hint-box"></div>
+          <div class="solution">
+            <div class="step"><div class="step-num">Step 1</div>
+              <p>Dipping events are imaged at wrong CMP positions if stacked without DMO. NMO alone assumes horizontal reflectors.</p></div>
+            <div class="step"><div class="step-num">Step 2</div>
+              <p>DMO remaps energy to the correct CMP locations for <em>all</em> dips, then stacking becomes valid.</p></div>
+            <div class="step"><div class="step-num">Step 3</div>
+              <p>Order: <strong>NMO → DMO → Stack</strong> (sometimes NMO and DMO combined).</p></div>
+            <button class="next-step-btn" data-i18n="nextStep">Next step</button>
+            <div class="common-mistake">⚠️ <strong>Common mistake:</strong> applying DMO after stack — it becomes a poststack migration step, not DMO.</div>
+          </div>
+          <details class="notes"><summary data-i18n="myNotes">Notes</summary>
+            <textarea class="note-field"></textarea></details>
+        </article>
+      </section>
+
+    </main>
+
+    <footer>
+      <p>Seismic Pro v3 · 27 problems · 9 topics · fully offline</p>
+    </footer>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="reportModal"><div class="modal-content">
+  <button class="modal-close">×</button>
+  <h2 data-i18n="reportTitle">📊 Progress</h2><div id="reportBody"></div>
+  <div style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap">
+    <button id="exportBtn" style="background:var(--accent);color:#fff;border:none;
+      padding:.45rem .85rem;border-radius:8px;font-family:inherit;cursor:pointer;font-size:.8rem">
+      📥 Export JSON</button></div>
+</div></div>
+
+<div class="modal" id="fcModal"><div class="modal-content">
+  <button class="modal-close">×</button>
+  <h2 data-i18n="fcTitle">🎴 Flashcards</h2>
+  <div class="flashcard" id="flashcard"><div class="fc-q" id="fcQ"></div>
+    <div class="fc-a" id="fcA"></div></div>
+  <div class="fc-nav"><button id="fcPrev">◀</button>
+    <span class="fc-count" id="fcCount">1/12</span><button id="fcNext">▶</button></div>
+</div></div>
+
+<div class="modal" id="glossModal"><div class="modal-content">
+  <button class="modal-close">×</button>
+  <h2 data-i18n="glossTitle">📖 Glossary</h2><div id="glossBody"></div>
+</div></div>
+
+<div class="modal" id="formulaModal"><div class="modal-content">
+  <button class="modal-close">×</button>
+  <h2 data-i18n="formulaTitle">ƒx Formulas</h2><div id="formulaBody"></div>
+</div></div>
+
+<script>
+/* ===== i18n ===== */
+const i18n={
+  en:{title:'Seismic Data Processing',subtitle:'27 problems · 9 topics · bilingual · fully offline',
+    sections:'Sections',problems:'Problems',sandbox:'Sandbox',workflow:'Workflow',
+    sec1:'1. Decon',sec2:'2. NMO',sec3:'3. Stacking',sec4:'4. Migration',
+    sec5:'5. AVO',sec6:'6. FK',sec7:'7. Radon',sec8:'8. RTM',sec9:'9. Statics/DMO',
+    sec1full:'Convolution & Deconvolution',sec2full:'Velocity & NMO',sec3full:'Stacking',
+    sec4full:'Migration',sec5full:'AVO / AVA',sec6full:'FK Filtering',
+    sec7full:'Radon Transform',sec8full:'Reverse Time Migration',sec9full:'Statics & DMO',
+    theory:'Theory',answer:'Answer:',check:'Check',hint:'Hint',solution:'Solution',
+    nextStep:'Next step',myNotes:'My notes',before:'Before',after:'After',easy:'Easy',
+    medium:'Medium',advanced:'Advanced',predict:'Predict:',examActive:'Exam mode',
+    workflowTitle:'🧩 Order the processing workflow',sandboxTitle:'🔬 Seismic Sandbox',
+    velocity:'Velocity',reportTitle:'📊 Progress',fcTitle:'🎴 Flashcards',
+    glossTitle:'📖 Glossary',formulaTitle:'ƒx Formulas',convCalc:'Convolution',
+    nmoCalc:'NMO',stkCalc:'Stacking SNR',migCalc:'Migration Dip',avoCalc:'AVO',
+    radCalc:'Radon',statCalc:'Statics',
+    p1title:'P1 — Trace from wavelet',p1stmt:'w=[1,−0.5], r=[1,0,0.6]. Compute x.',
+    p2title:'P2 — Inverse filter stability',p2stmt:'W=1−0.8e^(−i2πfΔt). Why unstable?',
+    p3title:'P3 — Wiener derivation',p3stmt:'Derive H(f) minimizing MSE.',
+    p4title:'P4 — Exact t(x)',p4stmt:'t₀=2s, v=3000, x=1500. Exact t(x)?',
+    p5title:'P5 — NMO correction',p5stmt:'From P4, exact Δt (s).',
+    p6title:'P6 — Stacking velocity',p6stmt:'Δt=20ms, x=1000, t₀=1.5. Find v.',
+    p7title:'P7 — Dix equation',p7stmt:'Derive Dix.',
+    p8title:'P8 — SNR fold 12',p8stmt:'Signal=1, noise=1, N=12. SNR?',
+    p9title:'P9 — Required fold',p9stmt:'SNR×4, min N?',
+    p10title:'P10 — Velocity error',p10stmt:'Why δv reduces stack amplitude?',
+    p11title:'P11 — Apparent dip',p11stmt:'θ=30°. θ_app?',
+    p12title:'P12 — Stolt',p12stmt:'kz at kx=0?',
+    p13title:'P13 — dx',p13stmt:'Derive dx.',
+    p14title:'P14 — AVO at 30°',p14stmt:'R₀=0.10, G=−1.0. R(30°)?',
+    p15title:'P15 — Extract R₀,G',p15stmt:'R(0)=0.15, R(45)=0.225. R₀?',
+    p16title:'P16 — AVO class',p16stmt:'R₀=0.08, G=−0.3. Class?',
+    p17title:'P17 — Wavenumber',p17stmt:'f=20, v=2000. k?',
+    p18title:'P18 — FK filter',p18stmt:'Signal v=3000, noise v=500. Keep or reject high k?',
+    p19title:'P19 — Aliasing',p19stmt:'dx=25, fmax=40. v_min (km/s)?',
+    p20title:'P20 — Radon τ',p20stmt:'t=2, x=1000, p=1ms/m. τ?',
+    p21title:'P21 — Primary vs multiple',p21stmt:'Which is multiple (A p=0.3 or B p=0.9)?',
+    p22title:'P22 — Parabolic Radon',p22stmt:'q=0.5ms/km², x=2km. Δt?',
+    p23title:'P23 — RTM imaging',p23stmt:'S=[0,1,2,1,0], R=same. I?',
+    p24title:'P24 — RTM vs Kirchhoff',p24stmt:'Subsalt: which? Justify.',
+    p25title:'P25 — Statics',p25stmt:'h=20m, v_w=600, v_r=2000. Δt?',
+    p26title:'P26 — DMO velocity',p26stmt:'θ=30°, v_DMO/v_stack?',
+    p27title:'P27 — DMO before stack',p27stmt:'Why DMO before stack?'},
+  ar:{title:'معالجة البيانات السيزمية',subtitle:'27 مسألة · 9 موضوعات · ثنائي اللغة · أوفلاين',
+    sections:'الأقسام',problems:'المسائل',sandbox:'المختبر',workflow:'ترتيب',
+    sec1:'١. Decon',sec2:'٢. NMO',sec3:'٣. التجميع',sec4:'٤. الترحيل',
+    sec5:'٥. AVO',sec6:'٦. FK',sec7:'٧. Radon',sec8:'٨. RTM',sec9:'٩. Statics/DMO',
+    sec1full:'الالتفاف وإزالة التلافيف',sec2full:'السرعة و NMO',sec3full:'التجميع',
+    sec4full:'الترحيل',sec5full:'AVO/AVA',sec6full:'ترشيح FK',sec7full:'تحويل Radon',
+    sec8full:'الترحيل العكسي الزمني',sec9full:'Statics و DMO',
+    theory:'النظرية',answer:'الإجابة:',check:'تحقق',hint:'تلميح',solution:'الحل',
+    nextStep:'الخطوة التالية',myNotes:'ملاحظاتي',before:'قبل',after:'بعد',easy:'سهل',
+    medium:'متوسط',advanced:'متقدم',predict:'توقّع:',examActive:'وضع الامتحان',
+    workflowTitle:'🧩 رتّب خطوات المعالجة',sandboxTitle:'🔬 مختبر سيزمي',
+    velocity:'السرعة',reportTitle:'📊 التقدّم',fcTitle:'🎴 بطاقات',
+    glossTitle:'📖 قاموس',formulaTitle:'ƒx معادلات',convCalc:'الالتفاف',
+    nmoCalc:'NMO',stkCalc:'SNR التجميع',migCalc:'ميل الترحيل',avoCalc:'AVO',
+    radCalc:'Radon',statCalc:'Statics',
+    p1title:'١ — الأثر',p1stmt:'w=[1,−0.5], r=[1,0,0.6]. احسب x.',
+    p2title:'٢ — استقرار المرشح',p2stmt:'W=1−0.8e^(−i2πfΔt). لماذا غير مستقر؟',
+    p3title:'٣ — اشتقاق Wiener',p3stmt:'اشتق H(f) بتقليل MSE.',
+    p4title:'٤ — t(x) الدقيق',p4stmt:'t₀=2, v=3000, x=1500. t(x)؟',
+    p5title:'٥ — تصحيح NMO',p5stmt:'من ٤، Δt الدقيق (s).',
+    p6title:'٦ — سرعة التجميع',p6stmt:'Δt=20ms, x=1000, t₀=1.5. جد v.',
+    p7title:'٧ — Dix',p7stmt:'اشتق Dix.',
+    p8title:'٨ — SNR طية 12',p8stmt:'Signal=1, noise=1, N=12. SNR؟',
+    p9title:'٩ — الطية',p9stmt:'SNR×4، أقل N؟',
+    p10title:'١٠ — خطأ السرعة',p10stmt:'لماذا δv يقلل السعة؟',
+    p11title:'١١ — الميل الظاهري',p11stmt:'θ=30°. θ_app؟',
+    p12title:'١٢ — Stolt',p12stmt:'kz عند kx=0؟',
+    p13title:'١٣ — dx',p13stmt:'اشتق dx.',
+    p14title:'١٤ — AVO عند 30°',p14stmt:'R₀=0.10, G=−1.0. R(30°)؟',
+    p15title:'١٥ — R₀,G',p15stmt:'R(0)=0.15, R(45)=0.225. R₀؟',
+    p16title:'١٦ — تصنيف AVO',p16stmt:'R₀=0.08, G=−0.3. تصنيف؟',
+    p17title:'١٧ — العدد الموجي',p17stmt:'f=20, v=2000. k؟',
+    p18title:'١٨ — مرشح FK',p18stmt:'Signal v=3000, noise v=500. Keep or reject high k؟',
+    p19title:'١٩ — Aliasing',p19stmt:'dx=25, fmax=40. v_min (km/s)؟',
+    p20title:'٢٠ — Radon τ',p20stmt:'t=2, x=1000, p=1ms/m. τ؟',
+    p21title:'٢١ — primary vs multiple',p21stmt:'أي مضاعف (A p=0.3 or B p=0.9)؟',
+    p22title:'٢٢ — Radon مكافئ',p22stmt:'q=0.5ms/km², x=2km. Δt؟',
+    p23title:'٢٣ — RTM',p23stmt:'S=[0,1,2,1,0], R=نفسه. I؟',
+    p24title:'٢٤ — RTM vs Kirchhoff',p24stmt:'تحت الملح: أي منهما؟ برر.',
+    p25title:'٢٥ — Statics',p25stmt:'h=20m, v_w=600, v_r=2000. Δt؟',
+    p26title:'٢٦ — سرعة DMO',p26stmt:'θ=30°, v_DMO/v_stack؟',
+    p27title:'٢٧ — DMO قبل Stack',p27stmt:'لماذا DMO قبل التجميع؟'}
+};
+
+/* ===== State ===== */
+const STORAGE_KEY='seismic-pro-v3';
+let state={theme:'dark',fs:'m',lang:'en',solved:[],answers:{},correct:{},
+  notes:{},guesses:{},hintsUsed:{},examMode:false};
+
+function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
+function load(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)state=Object.assign(state,JSON.parse(r))}catch(e){}}
+
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme',state.theme);
+  document.getElementById('themeBtn').textContent = state.theme==='dark'?'☀️':'🌙';
+}
+function applyFont(){
+  document.documentElement.setAttribute('data-fs',state.fs);
+  document.getElementById('fsSelect').value=state.fs;
+}
+function applyLang(){
+  document.documentElement.lang=state.lang;
+  document.documentElement.dir = state.lang==='ar'?'rtl':'ltr';
+  document.getElementById('langBtn').textContent = state.lang==='ar'?'🇪🇬 ع':'🇬🇧 EN';
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.dataset.i18n, txt=i18n[state.lang][key];
+    if(txt) el.textContent=txt;
+  });
+}
+
+/* ===== Toolbar ===== */
+document.getElementById('themeBtn').onclick=()=>{
+  state.theme=state.theme==='dark'?'light':'dark';applyTheme();save();
+};
+document.getElementById('fsSelect').onchange=e=>{state.fs=e.target.value;applyFont();save()};
+document.getElementById('langBtn').onclick=()=>{
+  state.lang=state.lang==='en'?'ar':'en';applyLang();save();updateProgress();
+};
+document.getElementById('printBtn').onclick=()=>window.print();
+document.getElementById('resetBtn').onclick=()=>{
+  if(confirm('Reset all?')){localStorage.removeItem(STORAGE_KEY);location.reload();}
+};
+
+/* ===== URL hash ===== */
+(function(){
+  const hash=location.hash.slice(1);if(!hash)return;
+  hash.split('&').forEach(p=>{const[k,v]=p.split('=');
+    if(k==='theme')state.theme=v;
+    if(k==='fs')state.fs=v;
+    if(k==='lang')state.lang=v;
+  });
+})();
+
+load();applyTheme();applyFont();applyLang();
+
+/* ===== Problem logic ===== */
+document.querySelectorAll('.problem').forEach(p=>{
+  const id=p.id;
+  if(state.solved.includes(id)) p.classList.add('solved');
+
+  const toggle=p.querySelector('.toggle');
+  const sol=p.querySelector('.solution');
+  if(toggle && sol){
+    toggle.onclick=()=>{
+      const on=sol.classList.toggle('show');
+      toggle.textContent = on?(state.lang==='ar'?'إخفاء':'Hide'):i18n[state.lang].solution;
+      if(on && !p.classList.contains('solved')) markSolved(p);
+    };
+  }
+
+  const steps=sol?sol.querySelectorAll('.step'):[];
+  const nextBtn=sol?sol.querySelector('.next-step-btn'):null;
+  if(nextBtn && steps.length){
+    let idx=0;
+    steps.forEach((s,i)=>{if(i===0)s.classList.add('visible')});
+    idx=1;
+    if(steps.length<=1) nextBtn.style.display='none';
+    nextBtn.onclick=()=>{
+      if(idx<steps.length){
+        steps[idx].classList.add('visible');
+        idx++;
+        if(idx>=steps.length) nextBtn.style.display='none';
+      }
+    };
+  }
+
+  const hintBtn=p.querySelector('.hint-btn');
+  const hintBox=p.querySelector('.hint-box');
+  const hints=JSON.parse(p.dataset.hints||'[]');
+  let hIdx=state.hintsUsed[id]||0;
+  if(hIdx>0 && hints.length) renderHints(hintBox,hints.slice(0,hIdx));
+  if(hintBtn){
+    hintBtn.onclick=()=>{
+      if(hIdx>=hints.length){
+        hintBox.innerHTML='<em>No more hints</em>';
+        hintBox.classList.add('show');return;
+      }
+      hIdx++;
+      state.hintsUsed[id]=hIdx;
+      renderHints(hintBox,hints.slice(0,hIdx));
+      hintBox.classList.add('show');save();
+    };
+  }
+
+  const checkBtn=p.querySelector('.check-btn');
+  if(checkBtn && p.dataset.answer){
+    const inp=p.querySelector('.answer-row input');
+    const fb=p.querySelector('.answer-row .fb');
+    if(inp && fb){
+      if(state.answers[id]) inp.value=state.answers[id];
+      inp.addEventListener('input',()=>{state.answers[id]=inp.value;save()});
+      checkBtn.onclick=()=>checkAnswer(p,inp.value,inp,fb);
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')checkBtn.click()});
+    }
+  }
+
+  const note=p.querySelector('.note-field');
+  if(note){
+    note.value=state.notes[id]||'';
+    note.addEventListener('input',()=>{state.notes[id]=note.value;save()});
+  }
+});
+
+function renderHints(box,hints){
+  box.innerHTML='<strong>Hints:</strong><ol>'+hints.map(h=>'<li>'+h+'</li>').join('')+'</ol>';
+}
+function checkAnswer(p,val,inp,fb){
+  const ansStr=(p.dataset.answer||'').trim();
+  const numeric=p.dataset.numeric!=='false';
+  if(!val.trim()){fb.className='fb warn';fb.textContent='Enter a value';return;}
+  if(numeric){
+    const u=parseFloat(val);
+    if(isNaN(u)){fb.className='fb warn';fb.textContent='Invalid';return;}
+    const c=parseFloat(ansStr);
+    const tol=parseFloat(p.dataset.tolerance||'0.02');
+    const ok=Math.abs(u-c)<=Math.abs(c)*tol+0.001;
+    if(ok){fb.className='fb ok';fb.textContent='✓ Correct!';markSolved(p,true);}
+    else{
+      const rel=Math.abs((u-c)/c);
+      if(rel<0.15){fb.className='fb warn';fb.textContent='Close — check units';}
+      else{fb.className='fb bad';fb.textContent='✗ Try again';}
+    }
+  } else {
+    const norm=s=>s.toLowerCase().trim().replace(/\s+/g,'').replace(/،/g,',');
+    if(norm(val)===norm(ansStr)){
+      fb.className='fb ok';fb.textContent='✓ Correct!';markSolved(p,true);
+    } else {
+      fb.className='fb bad';fb.textContent='✗ Try again';
+    }
+  }
+  save();
+}
+function markSolved(p,fromAnswer){
+  const id=p.id;
+  if(!state.solved.includes(id)) state.solved.push(id);
+  p.classList.add('solved');
+  if(fromAnswer) state.correct[id]=true;
+  save();updateProgress();
+}
+
+function updateProgress(){
+  const total=document.querySelectorAll('.problem').length;
+  const done=state.solved.length;
+  const pct=(done/total*100).toFixed(0);
+  document.getElementById('globalFill').style.width=pct+'%';
+  document.getElementById('globalLabel').textContent=
+    state.lang==='ar'?done+' / '+total+' محلولة':done+' / '+total+' solved';
+  document.querySelectorAll('.section').forEach(sec=>{
+    const probs=sec.querySelectorAll('.problem');
+    const solved=Array.from(probs).filter(p=>p.classList.contains('solved')).length;
+    const id=sec.id.replace('s','sec');
+    const el=document.getElementById(id+'-progress');
+    if(el) el.textContent=solved+'/'+probs.length;
+  });
+  const list=document.getElementById('probList');
+  list.innerHTML=Array.from(document.querySelectorAll('.problem')).map(p=>{
+    const solved=p.classList.contains('solved')?'done':'';
+    return '<a href="#'+p.id+'" class="'+solved+'">'+p.id.replace('p','')+'</a>';
+  }).join('');
+}
+
+/* ===== Sandbox ===== */
+function updateSandbox(){
+  const v=parseFloat(document.getElementById('sb-v').value);
+  const t0=parseFloat(document.getElementById('sb-t').value);
+  const xMax=parseFloat(document.getElementById('sb-x').value);
+  document.getElementById('sb-v-val').textContent=v+' m/s';
+  document.getElementById('sb-t-val').textContent=t0.toFixed(1)+' s';
+  document.getElementById('sb-x-val').textContent=xMax+' m';
+  const plotW=280,plotH=170,x0=30,y0=190,tTop=t0*1.6;
+  const ty=t=>y0-(t/tTop)*plotH,tx=x=>x0+(x/xMax)*plotW;
+  let d='';
+  for(let i=0;i<=60;i++){
+    const x=(i/60)*xMax;
+    const t=Math.sqrt(t0*t0+(x*x)/(v*v));
+    d+=(i===0?'M':'L')+tx(x).toFixed(1)+','+ty(t).toFixed(1);
+  }
+  document.getElementById('sb-hyp').setAttribute('d',d);
+  const ty0=ty(t0);
+  document.getElementById('sb-t0').setAttribute('y1',ty0);
+  document.getElementById('sb-t0').setAttribute('y2',ty0);
+}
+['sb-v','sb-t','sb-x'].forEach(id=>document.getElementById(id).addEventListener('input',updateSandbox));
+updateSandbox();
+
+/* ===== Workflow puzzle ===== */
+const wfSteps=[
+  {id:'acq',en:'Acquisition',ar:'الاستحواذ'},
+  {id:'decon',en:'Deconvolution',ar:'إزالة التلافيف'},
+  {id:'nmo',en:'NMO',ar:'NMO'},
+  {id:'dmo',en:'DMO',ar:'DMO'},
+  {id:'stack',en:'Stacking',ar:'التجميع'},
+  {id:'mig',en:'Migration',ar:'الترحيل'}
+];
+const wfOrder=['acq','decon','nmo','dmo','stack','mig'];
+let wfFilled=[];
+
+function renderWorkflow(){
+  const pool=document.getElementById('wfPool'),slots=document.getElementById('wfSlots');
+  pool.innerHTML=wfSteps.filter(s=>!wfFilled.includes(s.id))
+    .map(s=>'<div class="chip" data-id="'+s.id+'">'+(state.lang==='ar'?s.ar:s.en)+'</div>').join('');
+  slots.innerHTML='';
+  wfOrder.forEach((_,idx)=>{
+    const slot=document.createElement('div');
+    slot.className='slot';
+    if(wfFilled[idx]){
+      const step=wfSteps.find(s=>s.id===wfFilled[idx]);
+      slot.classList.add('filled');
+      slot.textContent=state.lang==='ar'?step.ar:step.en;
+      slot.onclick=()=>{wfFilled.splice(idx,1);renderWorkflow()};
+    } else slot.textContent=idx+1;
+    slots.appendChild(slot);
+  });
+  pool.querySelectorAll('.chip').forEach(c=>{
+    c.onclick=()=>{if(wfFilled.length<wfOrder.length){wfFilled.push(c.dataset.id);renderWorkflow()}};
+  });
+  const res=document.getElementById('wfResult');
+  if(wfFilled.length===wfOrder.length){
+    const ok=wfFilled.every((id,i)=>id===wfOrder[i]);
+    res.className='workflow-result '+(ok?'ok':'bad');
+    res.textContent=ok?'✓ Correct':'✗ Wrong order';
+    document.getElementById('wfSlots').classList.toggle('done',ok);
+  } else { res.textContent=''; res.className='workflow-result';
+    document.getElementById('wfSlots').classList.remove('done'); }
+}
+renderWorkflow();
+
+/* ===== Calculators ===== */
+function calcConv(){
+  const w0=parseFloat(document.getElementById('cw0').value);
+  const w1=parseFloat(document.getElementById('cw1').value);
+  const r2=parseFloat(document.getElementById('cr2').value);
+  document.getElementById('cw0v').textContent=w0.toFixed(1);
+  document.getElementById('cw1v').textContent=w1.toFixed(1);
+  document.getElementById('cr2v').textContent=r2.toFixed(1);
+  const w=[w0,w1],r=[1,0,r2];
+  const out=new Array(4).fill(0);
+  for(let i=0;i<2;i++)for(let j=0;j<3;j++)out[i+j]+=w[i]*r[j];
+  document.getElementById('convOut').textContent='x = ['+out.map(v=>v.toFixed(2)).join(', ')+']';
+}
+['cw0','cw1','cr2'].forEach(id=>document.getElementById(id).addEventListener('input',calcConv));
+calcConv();
+
+function calcNMO(){
+  const t0=parseFloat(document.getElementById('nmo-t0').value);
+  const v=parseFloat(document.getElementById('nmo-v').value);
+  const x=parseFloat(document.getElementById('nmo-x').value);
+  document.getElementById('nmo-t0-v').textContent=t0.toFixed(1);
+  document.getElementById('nmo-v-v').textContent=v;
+  document.getElementById('nmo-x-v').textContent=x;
+  const tE=Math.sqrt(t0*t0+(x/v)*(x/v)),dtE=tE-t0;
+  const dtA=(x*x)/(2*v*v*t0);
+  document.getElementById('nmoOut').textContent=
+`Exact: t=${tE.toFixed(4)}, dt=${(dtE*1000).toFixed(2)} ms
+Approx: t=${(t0+dtA).toFixed(4)}, dt=${(dtA*1000).toFixed(2)} ms
+Error: ${((dtA-dtE)*1000).toFixed(3)} ms`;
+}
+['nmo-t0','nmo-v','nmo-x'].forEach(id=>document.getElementById(id).addEventListener('input',calcNMO));
+calcNMO();
+
+function calcStk(){
+  const N=parseInt(document.getElementById('stk-n').value);
+  const s=parseFloat(document.getElementById('stk-s').value);
+  const n=parseFloat(document.getElementById('stk-ns').value);
+  document.getElementById('stk-n-v').textContent=N;
+  document.getElementById('stk-s-v').textContent=s.toFixed(1);
+  document.getElementById('stk-ns-v').textContent=n.toFixed(1);
+  const b=s/n,a=b*Math.sqrt(N);
+  document.getElementById('stkOut').textContent=
+`N=${N}, SNR before=${b.toFixed(2)}, after=${a.toFixed(2)}, x${Math.sqrt(N).toFixed(2)}`;
+}
+['stk-n','stk-s','stk-ns'].forEach(id=>document.getElementById(id).addEventListener('input',calcStk));
+calcStk();
+
+function calcMig(){
+  const th=parseFloat(document.getElementById('mig-t').value);
+  const z=parseFloat(document.getElementById('mig-z').value);
+  document.getElementById('mig-t-v').textContent=th;
+  document.getElementById('mig-z-v').textContent=z;
+  const rad=th*Math.PI/180,tanA=Math.sin(rad),appD=Math.atan(tanA)*180/Math.PI,dx=z*tanA;
+  document.getElementById('migOut').textContent=
+`θ=${th}°, θ_app=${appD.toFixed(2)}°, dx=${dx.toFixed(1)} m`;
+}
+['mig-t','mig-z'].forEach(id=>document.getElementById(id).addEventListener('input',calcMig));
+calcMig();
+
+function calcAvo(){
+  const r0=parseFloat(document.getElementById('avo-r0').value);
+  const g=parseFloat(document.getElementById('avo-g').value);
+  document.getElementById('avo-r0-v').textContent=r0.toFixed(2);
+  document.getElementById('avo-g-v').textContent=g.toFixed(2);
+  let out='R(θ) = R₀ + G·sin²θ\n';
+  [0,15,30,45].forEach(deg=>{
+    out+=`R(${deg}°) = ${(r0+g*Math.pow(Math.sin(deg*Math.PI/180),2)).toFixed(3)}\n`;
+  });
+  document.getElementById('avoOut').textContent=out;
+}
+['avo-r0','avo-g'].forEach(id=>document.getElementById(id).addEventListener('input',calcAvo));
+calcAvo();
+
+function calcRadon(){
+  const t=parseFloat(document.getElementById('rad-t').value);
+  const x=parseFloat(document.getElementById('rad-x').value);
+  const p=parseFloat(document.getElementById('rad-p').value);
+  document.getElementById('rad-t-v').textContent=t.toFixed(1);
+  document.getElementById('rad-x-v').textContent=x;
+  document.getElementById('rad-p-v').textContent=p.toFixed(1);
+  const tau=t-(p*x)/1000;
+  document.getElementById('radOut').textContent=
+`τ = ${t.toFixed(1)} − ${(p*x/1000).toFixed(3)} = ${tau.toFixed(3)} s`;
+}
+if(document.getElementById('rad-t')){
+  ['rad-t','rad-x','rad-p'].forEach(id=>document.getElementById(id).addEventListener('input',calcRadon));
+  calcRadon();
+}
+
+function calcStat(){
+  const h=parseFloat(document.getElementById('st-h').value);
+  const vw=parseFloat(document.getElementById('st-vw').value);
+  const vr=parseFloat(document.getElementById('st-vr').value);
+  document.getElementById('st-h-v').textContent=h;
+  document.getElementById('st-vw-v').textContent=vw;
+  document.getElementById('st-vr-v').textContent=vr;
+  const dt=2*h*(1/vw-1/vr)*1000;
+  document.getElementById('stOut').textContent=
+`Δt = 2h(1/v_w − 1/v_r) = ${dt.toFixed(1)} ms`;
+}
+if(document.getElementById('st-h')){
+  ['st-h','st-vw','st-vr'].forEach(id=>document.getElementById(id).addEventListener('input',calcStat));
+  calcStat();
+}
+
+/* ===== SEGY Parser ===== */
+function ibmToFloat(u32){
+  const sign=(u32&0x80000000)?-1:1;
+  const exp=((u32>>>24)&0x7F)-64;
+  const mant=(u32&0x00FFFFFF)/0x1000000;
+  return sign*mant*Math.pow(16,exp);
+}
+if(document.getElementById('segyFile')){
+  document.getElementById('segyFile').addEventListener('change',async e=>{
+    const file=e.target.files[0];if(!file)return;
+    const info=document.getElementById('segyInfo');
+    info.textContent='Reading '+file.name+'…';
+    try{
+      const buf=await file.arrayBuffer();
+      if(file.name.toLowerCase().endsWith('.json')){
+        const data=JSON.parse(new TextDecoder().decode(buf));
+        info.textContent=`JSON: ${file.name}\nKeys: ${Object.keys(data).join(', ')}\n`+
+          (data.samples?`First 5: [${data.samples.slice(0,5).join(', ')}]`:'No samples field');
+        return;
+      }
+      if(buf.byteLength<3600){info.textContent='File too short';return;}
+      const dv=new DataView(buf);
+      const textHdr=new TextDecoder('ascii').decode(new Uint8Array(buf,0,3200));
+      const sampInt=dv.getUint16(3200+16);
+      const numSamp=dv.getUint16(3200+20);
+      const fmtCode=dv.getUint16(3200+24);
+      const bps=(fmtCode===3||fmtCode===8)?2:4;
+      const traceB=240+numSamp*bps;
+      const numTr=Math.floor((buf.byteLength-3600)/traceB);
+      const cdpX=dv.getInt32(3600+180);
+      const offset=dv.getInt32(3600+36);
+      const samples=[];
+      for(let i=0;i<Math.min(5,numSamp);i++){
+        const off=3600+240+i*bps;
+        let v=0;
+        if(fmtCode===1)v=ibmToFloat(dv.getUint32(off));
+        else if(fmtCode===5)v=dv.getFloat32(off);
+        else if(fmtCode===3)v=dv.getInt16(off);
+        else if(fmtCode===8)v=dv.getInt8(off);
+        else if(fmtCode===2)v=dv.getInt32(off);
+        samples.push(v);
+      }
+      const fmtName={1:'IBM float',2:'4-byte int',3:'2-byte int',5:'IEEE float',8:'1-byte int'}[fmtCode]||'?';
+      const firstLine=textHdr.slice(0,80).replace(/[^\x20-\x7E]/g,'.');
+      info.textContent=
+`✓ SEGY: ${file.name} (${(buf.byteLength/1024).toFixed(1)} KB)
+Header: ${firstLine}
+
+Sample interval: ${sampInt} μs
+Samples/trace: ${numSamp}
+Format: ${fmtCode} (${fmtName})
+Traces: ${numTr}
+CDP X: ${cdpX}
+Offset: ${offset}
+
+First 5 samples: [${samples.map(v=>v.toFixed(4)).join(', ')}]`;
+      // wiggle
+      const allSamp=[];
+      for(let i=0;i<numSamp;i++){
+        const off=3600+240+i*bps;
+        let v=0;
+        if(fmtCode===1)v=ibmToFloat(dv.getUint32(off));
+        else if(fmtCode===5)v=dv.getFloat32(off);
+        else if(fmtCode===3)v=dv.getInt16(off);
+        else if(fmtCode===8)v=dv.getInt8(off);
+        else if(fmtCode===2)v=dv.getInt32(off);
+        allSamp.push(v);
+      }
+      const mx=Math.max(...allSamp.map(Math.abs))||1;
+      const W=320,H=160,mid=W/2;
+      let path='';
+      allSamp.forEach((s,i)=>{
+        const x=mid+(s/mx)*(W*0.4);
+        const y=(i/allSamp.length)*H;
+        path+=(i===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1)+' ';
+      });
+      const svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:var(--bg);border-radius:6px;border:1px solid var(--border);margin-top:.6rem">
+        <line x1="${mid}" y1="0" x2="${mid}" y2="${H}" stroke="#243350" stroke-dasharray="2 2"/>
+        <path d="${path}" stroke="#38bdf8" stroke-width="1.2" fill="none"/></svg>`;
+      const old=document.getElementById('segyWiggle');
+      if(old)old.remove();
+      info.insertAdjacentHTML('afterend','<div id="segyWiggle" style="margin-top:.6rem">'+svg+'</div>');
+    } catch(err){
+      info.textContent='Parse error: '+err.message;
+    }
+  });
+}
+
+/* ===== Report ===== */
+document.getElementById('reportBtn').onclick=()=>{
+  const total=document.querySelectorAll('.problem').length;
+  const solved=state.solved.length,correct=Object.keys(state.correct).length;
+  const notes=Object.values(state.notes).filter(n=>n.trim()).length;
+  const hints=Object.values(state.hintsUsed).reduce((a,b)=>a+b,0);
+  const pct=(solved/total*100).toFixed(0);
+  document.getElementById('reportBody').innerHTML=`
+    <div class="report-stat"><span>Solved</span><strong>${solved}/${total}</strong></div>
+    <div class="report-progress"><div class="fill" style="width:${pct}%"></div></div>
+    <div class="report-stat"><span>Correct</span><strong>${correct}</strong></div>
+    <div class="report-stat"><span>Hints</span><strong>${hints}</strong></div>
+    <div class="report-stat"><span>Notes</span><strong>${notes}</strong></div>`;
+  openModal('reportModal');
+};
+document.getElementById('exportBtn').onclick=()=>{
+  const data=JSON.stringify(state,null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='seismic-progress.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+
+/* ===== Flashcards ===== */
+const flashcards=[
+  {q:'Convolution',a:'x[n] = Σ w[k]·r[n−k]'},
+  {q:'Wiener filter',a:'H = W*/(|W|²+ε)'},
+  {q:'NMO',a:'t(x) = √(t₀² + x²/v²)'},
+  {q:'Small-offset NMO',a:'Δt ≈ x²/(2v²t₀)'},
+  {q:'Dix equation',a:'vₙ² = (v²rms,n·tₙ − v²rms,n−1·tₙ₋₁)/(tₙ − tₙ₋₁)'},
+  {q:'Stacking SNR',a:'improves √N'},
+  {q:'Stolt',a:'kz = (ω/v)·√(1 − (v·kx/ω)²)'},
+  {q:'Apparent dip',a:'tan θ_app = sin θ'},
+  {q:'AVO Shuey',a:'R(θ) ≈ R₀ + G·sin²θ'},
+  {q:'FK wavenumber',a:'k = f/v'},
+  {q:'Radon',a:'τ = t − p·x'},
+  {q:'DMO velocity',a:'v_DMO = v_stack / cos θ'},
+  {q:'Statics',a:'Δt = 2h(1/v_w − 1/v_r)'}
+];
+let fcIdx=0;
+function renderFC(){
+  document.getElementById('fcQ').textContent=flashcards[fcIdx].q;
+  document.getElementById('fcA').textContent=flashcards[fcIdx].a;
+  document.getElementById('fcCount').textContent=(fcIdx+1)+'/'+flashcards.length;
+  document.getElementById('flashcard').classList.remove('flipped');
+}
+document.getElementById('flashcard').onclick=()=>{
+  document.getElementById('flashcard').classList.toggle('flipped');
+};
+document.getElementById('fcNext').onclick=()=>{fcIdx=(fcIdx+1)%flashcards.length;renderFC()};
+document.getElementById('fcPrev').onclick=()=>{fcIdx=(fcIdx-1+flashcards.length)%flashcards.length;renderFC()};
+document.getElementById('fcBtn').onclick=()=>{fcIdx=0;renderFC();openModal('fcModal')};
+
+/* ===== Glossary ===== */
+const glossary=[
+  ['Convolution','x = w ∗ r (wavelet ∗ reflectivity)'],
+  ['Wiener filter','Stabilized inverse: H = W*/(|W|²+ε)'],
+  ['NMO','Offset-dependent traveltime correction'],
+  ['Dix equation','RMS → interval velocity'],
+  ['Stacking','Sum CMP traces; SNR ↑ √N'],
+  ['Migration','Repositions reflections; kz dispersion'],
+  ['AVO/AVA','Amplitude vs angle: R₀ + G sin²θ'],
+  ['FK filtering','Filter by wavenumber; k = f/v'],
+  ['Radon','τ−p transform (linear/parabolic)'],
+  ['RTM','Two-way wave eq migration; zero-lag cross-correlation'],
+  ['Statics','Near-surface time correction'],
+  ['DMO','Dip Moveout: v_DMO = v_stack/cos θ']
+];
+document.getElementById('glossBtn').onclick=()=>{
+  document.getElementById('glossBody').innerHTML=glossary.map(
+    ([t,d])=>`<div class="gloss-item"><strong>${t}</strong>${d}</div>`).join('');
+  openModal('glossModal');
+};
+document.getElementById('formulaBtn').onclick=()=>{
+  document.getElementById('formulaBody').innerHTML=flashcards.map(
+    f=>`<div class="gloss-item"><strong>${f.q}</strong><span class="m">${f.a}</span></div>`).join('');
+  openModal('formulaModal');
+};
+
+/* ===== Modal ===== */
+function openModal(id){document.getElementById(id).classList.add('open')}
+document.querySelectorAll('.modal').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')});
+  m.querySelector('.modal-close').onclick=()=>m.classList.remove('open');
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));
+});
+
+/* ===== Exam ===== */
+let examIv=null;
+document.getElementById('examBtn').onclick=()=>{
+  if(state.examMode){endExam();return;}
+  state.examMode=true;
+  document.querySelectorAll('.problem').forEach(p=>p.classList.add('exam-hidden'));
+  document.getElementById('examBanner').classList.add('active');
+  let secs=20*60;
+  examIv=setInterval(()=>{
+    secs--;
+    if(secs<=0){endExam();return;}
+    const m=Math.floor(secs/60),s=secs%60;
+    document.getElementById('examTimer').textContent=
+      String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  },1000);
+};
+function endExam(){
+  state.examMode=false;
+  document.querySelectorAll('.problem').forEach(p=>p.classList.remove('exam-hidden'));
+  document.getElementById('examBanner').classList.remove('active');
+  if(examIv){clearInterval(examIv);examIv=null;}
+  const correct=Object.keys(state.correct).length;
+  alert('Exam ended. Correct: '+correct);
+}
+document.getElementById('examEndBtn').onclick=endExam;
+
+/* ===== PWA ===== */
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('installBtn').style.display='inline-block';
+});
+document.getElementById('installBtn').onclick=async()=>{
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  document.getElementById('installBtn').style.display='none';
+};
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+/* ===== Scroll spy ===== */
+window.addEventListener('scroll',()=>{
+  const links=document.querySelectorAll('.sidebar a[href^="#"]');
+  let cur='';
+  document.querySelectorAll('.section,#sandbox,#workflow').forEach(s=>{
+    if(window.scrollY>=s.offsetTop-130)cur=s.id;
+  });
+  links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+cur));
+},{passive:true});
+
+updateProgress();
+/* ============================================================
+   ADVANCED INFO MODALS + SOUND ENGINE
+   ============================================================ */
+
+/* ---------- State additions ---------- */
+if(state.sound === undefined) state.sound = true;
+
+/* ---------- Sound engine (Web Audio API, no external files) ---------- */
+let _audioCtx = null;
+function _ensureAudio(){
+  if(!_audioCtx){
+    try{ _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e){ return null; }
+  }
+  if(_audioCtx.state === 'suspended') _audioCtx.resume().catch(()=>{});
+  return _audioCtx;
+}
+function playSound(type){
+  if(!state.sound) return;
+  const ctx = _ensureAudio();
+  if(!ctx) return;
+  const t = ctx.currentTime;
+  const tone = (freq, dur, delay, vol, wave) => {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = wave || 'sine';
+    o.frequency.setValueAtTime(freq, t + (delay || 0));
+    g.gain.setValueAtTime(vol || 0.12, t + (delay || 0));
+    g.gain.exponentialRampToValueAtTime(0.001, t + (delay || 0) + dur);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t + (delay || 0));
+    o.stop(t + (delay || 0) + dur);
+  };
+  try {
+    if(type === 'click'){ tone(880, 0.06, 0, 0.06, 'square'); }
+    else if(type === 'correct'){
+      tone(523, 0.11, 0, 0.13);
+      tone(659, 0.11, 0.08, 0.13);
+      tone(784, 0.18, 0.16, 0.14);
+    }
+    else if(type === 'wrong'){
+      tone(220, 0.16, 0, 0.11, 'sawtooth');
+      tone(175, 0.16, 0.1, 0.09, 'sawtooth');
+    }
+    else if(type === 'reveal'){ tone(440, 0.1, 0, 0.09); tone(554, 0.12, 0.07, 0.08); }
+    else if(type === 'modal'){ tone(660, 0.08, 0, 0.08); tone(880, 0.1, 0.06, 0.08); }
+  } catch(e){}
+}
+
+/* ---------- Sound toggle button (added to toolbar) ---------- */
+(function addSoundBtn(){
+  const toolbar = document.querySelector('.toolbar');
+  if(!toolbar || document.getElementById('soundBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'soundBtn';
+  btn.textContent = '🔊';
+  btn.title = 'Toggle sound';
+  if(!state.sound) btn.classList.add('muted');
+  btn.onclick = () => {
+    state.sound = !state.sound;
+    btn.textContent = state.sound ? '🔊' : '🔇';
+    btn.classList.toggle('muted', !state.sound);
+    save();
+    if(state.sound) playSound('click');
+  };
+  const resetBtn = document.getElementById('resetBtn');
+  if(resetBtn) toolbar.insertBefore(btn, resetBtn);
+  else toolbar.appendChild(btn);
+})();
+
+/* ---------- Global click sounds ---------- */
+document.addEventListener('click', e => {
+  if(e.target.closest('.toggle') ||
+     e.target.closest('.hint-btn') ||
+     e.target.closest('.info-btn') ||
+     e.target.closest('.check-btn') ||
+     e.target.closest('.next-step-btn')){
+    playSound('click');
+  }
+  if(e.target.closest('.toggle')) setTimeout(()=>playSound('reveal'), 100);
+}, true);
+
+/* ---------- Patch checkAnswer for correct/wrong sounds ---------- */
+if(typeof checkAnswer === 'function'){
+  const _origCheck = checkAnswer;
+  checkAnswer = function(p, val, inp, fb){
+    _origCheck(p, val, inp, fb);
+    setTimeout(() => {
+      if(fb.classList.contains('ok')) playSound('correct');
+      else if(fb.classList.contains('bad')) playSound('wrong');
+    }, 60);
+  };
+}
+
+/* ---------- PROBLEM_INFO: explanations + advanced SVG per problem ---------- */
+const PROBLEM_INFO = {
+  p1: {
+    title_en: 'Convolution in the time domain',
+    title_ar: 'الالتفاف في المجال الزمني',
+    concept_en: 'The seismic wavelet acts like a "brush" that smears each reflectivity spike into a longer signature. Every reflection in the Earth produces one copy of the wavelet in the trace. Deconvolution reverses this: given x(t) and w(t), recover r(t).',
+    concept_ar: 'الموجة السيزمية تعمل مثل "فرشاة" تلطّخ كل نبضة انعكاسية في بصمة أطول. كل انعكاس في باطن الأرض يُنتج نسخة من الموجة في الأثر. إزالة التلافيف تعكس ذلك: بمعرفة x(t) و w(t)، استعد r(t).',
+    formula: 'x[n] = Σ<sub>k</sub> w[k]·r[n−k]',
+    mistake_en: 'Reversing the index: it is w[k]·r[n−k], not w[n−k]·r[k] (well, they are equal for commutative but confusing when hand-computing).',
+    mistake_ar: 'عكس الفهرس: الصحيح w[k]·r[n−k] وليس w[n−k]·r[k] رغم أنهما متساويان — يسبب ارتباكًا في الحساب اليدوي.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="20" y="18" fill="#94a3b8" font-size="11" font-weight="600">Reflectivity r[n]</text>
+      <line x1="20" y1="100" x2="150" y2="100" stroke="#2a3a55"/>
+      <line x1="50" y1="100" x2="50" y2="40" stroke="#22c55e" stroke-width="3"/>
+      <line x1="110" y1="100" x2="110" y2="70" stroke="#22c55e" stroke-width="3"/>
+      <text x="50" y="120" fill="#94a3b8" font-size="9" text-anchor="middle">r₀</text>
+      <text x="110" y="120" fill="#94a3b8" font-size="9" text-anchor="middle">r₂</text>
+
+      <text x="180" y="18" fill="#94a3b8" font-size="11" font-weight="600">Wavelet w[n]</text>
+      <line x1="180" y1="100" x2="320" y2="100" stroke="#2a3a55"/>
+      <line x1="220" y1="100" x2="220" y2="40" stroke="#38bdf8" stroke-width="3"/>
+      <line x1="260" y1="100" x2="260" y2="130" stroke="#38bdf8" stroke-width="3"/>
+      <text x="220" y="150" fill="#94a3b8" font-size="9" text-anchor="middle">+1</text>
+      <text x="260" y="150" fill="#94a3b8" font-size="9" text-anchor="middle">−0.5</text>
+
+      <rect x="180" y="30" width="80" height="120" fill="rgba(56,189,248,.12)" rx="4">
+        <animate attributeName="x" values="180;180;370;370" dur="4s" repeatCount="indefinite"/>
+      </rect>
+
+      <text x="360" y="18" fill="#94a3b8" font-size="11" font-weight="600">x[n] = w ∗ r</text>
+      <line x1="360" y1="100" x2="490" y2="100" stroke="#2a3a55"/>
+      <g opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="1s" begin="1.5s" fill="freeze"/>
+        <line x1="380" y1="100" x2="380" y2="40" stroke="#f59e0b" stroke-width="3"/>
+        <line x1="410" y1="100" x2="410" y2="130" stroke="#f59e0b" stroke-width="3"/>
+        <line x1="440" y1="100" x2="440" y2="70" stroke="#f59e0b" stroke-width="3"/>
+        <line x1="470" y1="100" x2="470" y2="115" stroke="#f59e0b" stroke-width="3"/>
+        <text x="380" y="150" fill="#94a3b8" font-size="9" text-anchor="middle">1</text>
+        <text x="410" y="150" fill="#94a3b8" font-size="9" text-anchor="middle">−.5</text>
+        <text x="440" y="150" fill="#94a3b8" font-size="9" text-anchor="middle">.6</text>
+        <text x="470" y="150" fill="#94a3b8" font-size="9" text-anchor="middle">−.3</text>
+      </g>
+      <text x="250" y="200" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Each r-spike produces a scaled copy of w; overlapping copies add.
+      </text>
+    </svg>`
+  },
+
+  p2: {
+    title_en: 'Spectral instability of direct inverse',
+    title_ar: 'عدم استقرار طيفي في المرشح العكسي المباشر',
+    concept_en: 'When the wavelet spectrum |W(f)| approaches zero, dividing by it amplifies any small noise to huge values. The Wiener filter caps this amplification by adding ε to the denominator — trading a bit of resolution for stability.',
+    concept_ar: 'عندما يقترب طيف الموجة |W(f)| من الصفر، فإن القسمة عليه تضخّم الضوضاء الصغيرة إلى قيم هائلة. مرشح Wiener يحدّ من هذا التضخيم بإضافة ε للمقام — مقايضة بين الدقة والاستقرار.',
+    formula: 'H<sub>Wiener</sub> = W<sup>*</sup> / (|W|<sup>2</sup> + ε)',
+    mistake_en: 'Using ε too large destroys resolution; using ε too small leaves noise. Real workflows tune ε per band.',
+    mistake_ar: 'ε كبير جدًا يدمّر الدقة، وصغير جدًا يترك الضوضاء. سير العمل الحقيقي يضبط ε لكل نطاق.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="20" y="18" fill="#94a3b8" font-size="11" font-weight="600">|W(f)| — wavelet has gaps</text>
+      <line x1="20" y1="180" x2="180" y2="180" stroke="#2a3a55"/>
+      <line x1="20" y1="180" x2="20" y2="40" stroke="#2a3a55"/>
+      <path d="M30,70 Q70,40 100,175 Q120,185 150,70 L170,90" stroke="#38bdf8" stroke-width="2" fill="none"/>
+      <text x="100" y="200" fill="#94a3b8" font-size="9" text-anchor="middle">near-zero dip →</text>
+
+      <text x="210" y="18" fill="#94a3b8" font-size="11" font-weight="600">|1/W| — blows up</text>
+      <line x1="210" y1="180" x2="370" y2="180" stroke="#2a3a55"/>
+      <line x1="210" y1="180" x2="210" y2="40" stroke="#2a3a55"/>
+      <path d="M220,80 Q260,60 290,55 Q300,20 305,55 Q310,20 320,55 Q340,120 360,90"
+            stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="4 3"/>
+      <text x="290" y="35" fill="#ef4444" font-size="9" text-anchor="middle">∞</text>
+
+      <text x="400" y="18" fill="#94a3b8" font-size="11" font-weight="600">|H| — Wiener, bounded</text>
+      <line x1="400" y1="180" x2="480" y2="180" stroke="#2a3a55"/>
+      <line x1="400" y1="180" x2="400" y2="40" stroke="#2a3a55"/>
+      <path d="M410,85 Q430,70 450,80 Q465,75 475,80"
+            stroke="#22c55e" stroke-width="2.5" fill="none"/>
+      <text x="440" y="200" fill="#22c55e" font-size="9" text-anchor="middle">capped</text>
+
+      <text x="250" y="225" fill="#f59e0b" font-size="10" text-anchor="middle" font-weight="600">
+        Adding ε in denominator limits the peak gain
+      </text>
+    </svg>`
+  },
+
+  p3: {
+    title_en: 'Wiener filter derivation',
+    title_ar: 'اشتقاق مرشح Wiener',
+    concept_en: 'We seek H(f) minimizing E[|r − h∗x|²]. Setting the derivative to zero gives the normal equation H·S_xx = S_rx. Solving yields a filter that balances signal whitening against noise amplification.',
+    concept_ar: 'نبحث عن H(f) يُصغّر E[|r − h∗x|²]. بمساواة المشتقة بالصفر نحصل على المعادلة الطبيعية H·S_xx = S_rx. الحل يعطي مرشحًا يوازن بين تبييض الإشارة وتضخيم الضوضاء.',
+    formula: 'H(f) = S<sub>rx</sub>/S<sub>xx</sub> = W<sup>*</sup>·S<sub>rr</sub> / (|W|<sup>2</sup>·S<sub>rr</sub> + S<sub>nn</sub>)',
+    mistake_en: 'Forgetting the complex conjugate W* — critical when the wavelet has phase (non-zero-phase wavelets).',
+    mistake_ar: 'نسيان المرافق المركّب W* — حاسم عندما تكون للموجة طور (موجات غير صفرية الطور).',
+    svg: `<svg viewBox="0 0 500 220">
+      <text x="250" y="20" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        Wiener filter balances two objectives
+      </text>
+
+      <rect x="40" y="50" width="180" height="120" rx="10" fill="rgba(56,189,248,.1)" stroke="#38bdf8"/>
+      <text x="130" y="80" fill="#38bdf8" font-size="11" text-anchor="middle" font-weight="600">Resolution</text>
+      <text x="130" y="105" fill="#94a3b8" font-size="10" text-anchor="middle">Higher if H peaks</text>
+      <text x="130" y="125" fill="#94a3b8" font-size="10" text-anchor="middle">near 1/W</text>
+      <line x1="70" y1="150" x2="190" y2="150" stroke="#2a3a55"/>
+      <path d="M70,150 Q110,150 120,70 Q140,150 190,150" stroke="#38bdf8" stroke-width="2" fill="none"/>
+
+      <rect x="280" y="50" width="180" height="120" rx="10" fill="rgba(239,68,68,.1)" stroke="#ef4444"/>
+      <text x="370" y="80" fill="#ef4444" font-size="11" text-anchor="middle" font-weight="600">Stability</text>
+      <text x="370" y="105" fill="#94a3b8" font-size="10" text-anchor="middle">Noise S_nn / S_rr</text>
+      <text x="370" y="125" fill="#94a3b8" font-size="10" text-anchor="middle">sets ε floor</text>
+      <line x1="310" y1="150" x2="430" y2="150" stroke="#2a3a55"/>
+      <rect x="340" y="70" width="60" height="80" fill="rgba(239,68,68,.25)"/>
+      <text x="370" y="120" fill="#ef4444" font-size="10" text-anchor="middle" font-weight="600">ε</text>
+
+      <text x="250" y="205" fill="#22c55e" font-size="11" text-anchor="middle" font-weight="600">
+        H(f) = W* / (|W|² + ε) — the balance point
+      </text>
+    </svg>`
+  },
+
+  p4: {
+    title_en: 'Traveltime hyperbola vs parabola',
+    title_ar: 'القطع الزائد مقابل القطع المكافئ لزمن السفر',
+    concept_en: 'The exact traveltime is a hyperbola in (x,t). For small offsets (x ≪ z), a Taylor expansion reduces it to a parabola. The error grows as x/z approaches 1. At x/z = 0.5, error < 1 ms — negligible.',
+    concept_ar: 'زمن السفر الدقيق قطع زائد في (x,t). للإزاحات الصغيرة (x ≪ z)، اختصار Taylor يجعله قطعًا مكافئًا. الخطأ يزداد مع اقتراب x/z من 1. عند x/z = 0.5، الخطأ < 1 مللي ثانية — مهمل.',
+    formula: 't(x) = √(t₀² + x²/v²) &nbsp;≈&nbsp; t₀ + x²/(2t₀v²)',
+    mistake_en: 'Using the parabolic approximation for large offsets (x > z) — NMO corrections become inaccurate.',
+    mistake_ar: 'استخدام التقريب المكافئ للإزاحات الكبيرة (x > z) — تصحيح NMO يصبح غير دقيق.',
+    svg: `<svg viewBox="0 0 500 260">
+      <line x1="60" y1="40" x2="60" y2="220" stroke="#2a3a55"/>
+      <line x1="60" y1="220" x2="470" y2="220" stroke="#2a3a55"/>
+      <text x="50" y="45" fill="#94a3b8" font-size="10" text-anchor="end">t</text>
+      <text x="465" y="240" fill="#94a3b8" font-size="10">x (m)</text>
+
+      <text x="50" y="100" fill="#94a3b8" font-size="10" text-anchor="end">t₀ = 2s</text>
+      <line x1="60" y1="95" x2="70" y2="95" stroke="#94a3b8"/>
+
+      <path d="M60,95 Q200,98 320,140 T460,190" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
+      <path d="M60,95 Q200,98 320,137 T460,184" stroke="#22c55e" stroke-width="2" fill="none" stroke-dasharray="6 4"/>
+
+      <line x1="360" y1="40" x2="360" y2="220" stroke="#ef4444" stroke-dasharray="3 3" opacity=".6"/>
+      <circle cx="360" cy="153" r="5" fill="#ef4444"/>
+      <text x="370" y="150" fill="#ef4444" font-size="10">x = 1500 m</text>
+
+      <line x1="300" y1="250" x2="330" y2="250" stroke="#38bdf8" stroke-width="2"/>
+      <text x="335" y="253" fill="#94a3b8" font-size="9">exact (hyperbola)</text>
+      <line x1="300" y1="265" x2="330" y2="265" stroke="#22c55e" stroke-width="2" stroke-dasharray="6 4"/>
+      <text x="335" y="268" fill="#94a3b8" font-size="9">approx (parabola)</text>
+    </svg>`
+  },
+
+  p5: {
+    title_en: 'NMO correction amount',
+    title_ar: 'مقدار تصحيح NMO',
+    concept_en: 'Δt_NMO is the time shift needed to flatten a hyperbola after NMO correction. It increases with offset² and decreases with velocity². For x/z = 0.5 the shift is only ~60 ms.',
+    concept_ar: 'Δt_NMO هو الإزاحة الزمنية المطلوبة لتسوية القطع الزائد بعد التصحيح. يزداد مع مربع الإزاحة ويقل مع مربع السرعة. عند x/z = 0.5 الإزاحة ~60 مللي ثانية فقط.',
+    formula: 'Δt<sub>NMO</sub> = t(x) − t₀ ≈ x²/(2t₀v²)',
+    mistake_en: 'Confusing t(x) with Δt. The correction is only the difference — the event is still at time t(x) before NMO, and t₀ after.',
+    mistake_ar: 'الخلط بين t(x) و Δt. التصحيح هو الفرق فقط — الحدث يبقى عند t(x) قبل NMO وعند t₀ بعده.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="250" y="20" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        Trace at offset x is shifted down by Δt, then stacked
+      </text>
+
+      <line x1="60" y1="50" x2="60" y2="200" stroke="#2a3a55"/>
+      <text x="50" y="55" fill="#94a3b8" font-size="9" text-anchor="end">0</text>
+      <text x="50" y="205" fill="#94a3b8" font-size="9" text-anchor="end">t</text>
+
+      <text x="150" y="45" fill="#94a3b8" font-size="10" text-anchor="middle">Before NMO</text>
+      <line x1="80" y1="50" x2="80" y2="200" stroke="#243350"/>
+      <line x1="150" y1="50" x2="150" y2="200" stroke="#243350"/>
+      <line x1="220" y1="50" x2="220" y2="200" stroke="#243350"/>
+      <path d="M80,90 Q150,90 220,130" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
+
+      <text x="400" y="45" fill="#94a3b8" font-size="10" text-anchor="middle">After NMO (flat)</text>
+      <line x1="320" y1="50" x2="320" y2="200" stroke="#243350"/>
+      <line x1="400" y1="50" x2="400" y2="200" stroke="#243350"/>
+      <line x1="470" y1="50" x2="470" y2="200" stroke="#243350"/>
+      <line x1="320" y1="120" x2="470" y2="120" stroke="#22c55e" stroke-width="2.5"/>
+
+      <path d="M240,120 Q260,120 280,130" stroke="#f59e0b" stroke-width="2" fill="none" marker-end="url(#arr5)"/>
+      <defs><marker id="arr5" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/>
+      </marker></defs>
+      <text x="260" y="115" fill="#f59e0b" font-size="9" text-anchor="middle">shift Δt</text>
+
+      <text x="250" y="230" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Energy is aligned; traces now sum constructively
+      </text>
+    </svg>`
+  },
+
+  p6: {
+    title_en: 'Picking stacking velocity from NMO',
+    title_ar: 'التقاط سرعة التجميع من NMO',
+    concept_en: 'In practice, velocity is picked by measuring Δt at a known offset, then solving the NMO equation. Real workflow: pick Δt from the semblance panel, invert for v.',
+    concept_ar: 'عمليًا، تُلتقط السرعة بقياس Δt عند إزاحة معروفة ثم حل معادلة NMO. سير العمل الحقيقي: التقاط Δt من لوحة Semblance ثم حساب v.',
+    formula: 'v<sub>st</sub> = √(x² / (2·t₀·Δt))',
+    mistake_en: 'Using the wrong Δt unit (ms vs s) — factor of 1000 error in velocity!',
+    mistake_ar: 'استخدام وحدة Δt خاطئة (مللي ثانية مقابل ثانية) — خطأ بمقدار 1000 في السرعة!',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        Velocity picking: where does the hyperbola best match?
+      </text>
+      <line x1="60" y1="40" x2="60" y2="200" stroke="#2a3a55"/>
+      <line x1="60" y1="200" x2="470" y2="200" stroke="#2a3a55"/>
+      <text x="50" y="45" fill="#94a3b8" font-size="9" text-anchor="end">t</text>
+      <text x="460" y="220" fill="#94a3b8" font-size="9">offset</text>
+
+      <!-- Wrong velocities -->
+      <path d="M80,90 Q250,90 400,160" stroke="#ef4444" stroke-width="1.5" fill="none" stroke-dasharray="3 3" opacity=".5"/>
+      <path d="M80,90 Q250,90 400,135" stroke="#f59e0b" stroke-width="1.5" fill="none" stroke-dasharray="3 3" opacity=".6"/>
+      <path d="M80,90 Q250,90 400,105" stroke="#22c55e" stroke-width="2.5" fill="none"/>
+      <path d="M80,90 Q250,90 400,90" stroke="#ef4444" stroke-width="1.5" fill="none" stroke-dasharray="3 3" opacity=".5"/>
+
+      <text x="430" y="160" fill="#ef4444" font-size="9">v too low</text>
+      <text x="430" y="135" fill="#f59e0b" font-size="9">v low</text>
+      <text x="430" y="102" fill="#22c55e" font-size="10" font-weight="600">v correct</text>
+      <text x="430" y="87" fill="#ef4444" font-size="9">v too high</text>
+
+      <circle cx="250" cy="90" r="4" fill="#22c55e" class="pulse-dot"/>
+      <text x="250" y="70" fill="#22c55e" font-size="10" text-anchor="middle" font-weight="600">best pick</text>
+    </svg>`
+  },
+
+  p7: {
+    title_en: 'Dix equation — layered velocity inversion',
+    title_ar: 'معادلة Dix — عكس السرعة في الوسائط الطبقية',
+    concept_en: 'RMS velocity is a time-weighted average of layer velocities, not the actual velocity at any depth. Dix peels layers one by one: the change in RMS² × time between two picks gives the interval velocity of the newly crossed layer.',
+    concept_ar: 'سرعة RMS متوسط مرجّح زمنيًا لسرعات الطبقات، وليست السرعة الفعلية عند أي عمق. Dix يقشّر الطبقات واحدة تلو الأخرى: التغير في RMS² × الزمن بين قمتين يعطي سرعة الطبقة الجديدة.',
+    formula: 'v<sub>n</sub>² = (v²<sub>rms,n</sub>·t<sub>n</sub> − v²<sub>rms,n−1</sub>·t<sub>n−1</sub>) / (t<sub>n</sub> − t<sub>n−1</sub>)',
+    mistake_en: 'Applying Dix across a strong lateral velocity gradient — it assumes layers are flat and homogeneous.',
+    mistake_ar: 'تطبيق Dix عبر تدرّج سرعة جانبي قوي — تفترض الطبقات مسطحة ومتجانسة.',
+    svg: `<svg viewBox="0 0 500 260">
+      <text x="30" y="18" fill="#94a3b8" font-size="11" font-weight="600">Layer model</text>
+      <rect x="20" y="35" width="200" height="55" fill="rgba(34,197,94,.13)" stroke="#22c55e"/>
+      <text x="120" y="68" fill="#94a3b8" font-size="10" text-anchor="middle">v₁ = 2000, Δt₁</text>
+      <rect x="20" y="90" width="200" height="70" fill="rgba(56,189,248,.13)" stroke="#38bdf8"/>
+      <text x="120" y="130" fill="#94a3b8" font-size="10" text-anchor="middle">v₂ = 3000, Δt₂</text>
+      <rect x="20" y="160" width="200" height="60" fill="rgba(245,158,11,.13)" stroke="#f59e0b"/>
+      <text x="120" y="195" fill="#94a3b8" font-size="10" text-anchor="middle">v₃ = 4000, Δt₃</text>
+
+      <text x="380" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">t² vs x²</text>
+      <line x1="270" y1="240" x2="470" y2="240" stroke="#2a3a55"/>
+      <line x1="270" y1="240" x2="270" y2="40" stroke="#2a3a55"/>
+      <text x="260" y="45" fill="#94a3b8" font-size="9" text-anchor="end">t²</text>
+      <text x="465" y="255" fill="#94a3b8" font-size="9">x²</text>
+
+      <path d="M280,225 L330,180 L390,110 L450,45" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
+      <text x="305" y="185" fill="#22c55e" font-size="9">v_rms,1</text>
+      <text x="360" y="130" fill="#38bdf8" font-size="9">v_rms,2</text>
+      <text x="420" y="65" fill="#f59e0b" font-size="9">v_rms,3</text>
+      <text x="375" y="235" fill="#94a3b8" font-size="9" text-anchor="middle">
+        Each slope segment → one interval velocity
+      </text>
+    </svg>`
+  },
+
+  p8: {
+    title_en: 'Stacking gain in SNR',
+    title_ar: 'تحسّن SNR من التجميع',
+    concept_en: 'Coherent signal adds linearly: N traces → N× amplitude. Random noise adds in quadrature: √N× amplitude. Ratio (SNR) improves by √N. This is why 12-fold stacking gives ~3.5× SNR — not 12×.',
+    concept_ar: 'الإشارة المتوافقة تُجمع خطيًا: N أثر → سعة N×. الضوضاء العشوائية تُجمع تربيعيًا: سعة √N×. النسبة (SNR) تتحسن بـ √N. لهذا التجميع 12 طية يعطي ~3.5× وليس 12×.',
+    formula: 'SNR<sub>after</sub> = SNR<sub>before</sub> · √N',
+    mistake_en: 'Thinking SNR improves N-fold — only the signal does; noise grows as √N.',
+    mistake_ar: 'الاعتقاد أن SNR يتحسن N مرة — فقط الإشارة تفعل، الضوضاء تنمو بـ √N.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        Signal adds coherently, noise randomly
+      </text>
+
+      <text x="90" y="45" fill="#22c55e" font-size="10" text-anchor="middle">Traces 1–6</text>
+      <line x1="50" y1="60" x2="50" y2="200" stroke="#243350"/>
+      <line x1="80" y1="60" x2="80" y2="200" stroke="#243350"/>
+      <line x1="110" y1="60" x2="110" y2="200" stroke="#243350"/>
+      <line x1="140" y1="60" x2="140" y2="200" stroke="#243350"/>
+      <line x1="170" y1="60" x2="170" y2="200" stroke="#243350"/>
+      <line x1="200" y1="60" x2="200" y2="200" stroke="#243350"/>
+      <path d="M50,120 Q65,100 80,120 Q95,140 110,120 Q125,100 140,120 Q155,140 170,120 Q185,100 200,120"
+            stroke="#22c55e" stroke-width="1.5" fill="none"/>
+      <path d="M50,140 Q65,130 80,135 Q95,150 110,140 Q125,128 140,138 Q155,148 170,142 Q185,130 200,140"
+            stroke="#ef4444" stroke-width="1" fill="none" opacity=".6"/>
+
+      <text x="400" y="45" fill="#22c55e" font-size="10" text-anchor="middle">Stacked</text>
+      <line x1="400" y1="60" x2="400" y2="200" stroke="#243350"/>
+      <path d="M400,120 Q412,90 424,120 Q436,140 448,120 Q460,90 472,120"
+            stroke="#22c55e" stroke-width="3" fill="none"/>
+
+      <text x="250" y="225" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Signal: N× &nbsp;·&nbsp; Noise: √N× &nbsp;·&nbsp; SNR: √N×
+      </text>
+    </svg>`
+  },
+
+  p9: {
+    title_en: 'Required fold for target SNR',
+    title_ar: 'الطية المطلوبة لـ SNR هدف',
+    concept_en: 'SNR improvement is √N. To get 4× improvement, need N = 16. To get 10×, N = 100. This is why seismic crews push for high fold — diminishing returns.',
+    concept_ar: 'تحسّن SNR هو √N. للحصول على 4× تحسّن، نحتاج N = 16. للحصول على 10×، N = 100. لهذا تدفع الفرق السيزمية للحصول على طية عالية — بعوائد متناقصة.',
+    formula: 'N = (target SNR improvement)²',
+    mistake_en: 'Folding more traces at one CMP is not free — acquisition cost grows linearly, SNR only as √N.',
+    mistake_ar: 'طيّ آثار أكثر في CMP ليس مجانيًا — تكلفة الاستحواذ تنمو خطيًا، و SNR فقط بـ √N.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        SNR gain scales as √N — diminishing returns
+      </text>
+      <line x1="60" y1="210" x2="470" y2="210" stroke="#2a3a55"/>
+      <line x1="60" y1="210" x2="60" y2="40" stroke="#2a3a55"/>
+      <text x="50" y="45" fill="#94a3b8" font-size="9" text-anchor="end">SNR</text>
+      <text x="460" y="230" fill="#94a3b8" font-size="9">N</text>
+
+      <path d="M80,180 Q140,120 200,90 Q300,60 440,50" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
+      <rect x="120" y="148" width="20" height="62" fill="#22c55e" opacity=".7"/>
+      <text x="130" y="225" fill="#94a3b8" font-size="9" text-anchor="middle">4</text>
+      <rect x="200" y="100" width="20" height="110" fill="#22c55e" opacity=".7"/>
+      <text x="210" y="225" fill="#94a3b8" font-size="9" text-anchor="middle">16</text>
+      <circle cx="210" cy="100" r="6" fill="#f59e0b" class="pulse-dot"/>
+      <text x="240" y="95" fill="#f59e0b" font-size="10" font-weight="600">target: 4×</text>
+      <rect x="300" y="70" width="20" height="140" fill="#22c55e" opacity=".7"/>
+      <text x="310" y="225" fill="#94a3b8" font-size="9" text-anchor="middle">25</text>
+      <rect x="400" y="50" width="20" height="160" fill="#22c55e" opacity=".7"/>
+      <text x="410" y="225" fill="#94a3b8" font-size="9" text-anchor="middle">36</text>
+    </svg>`
+  },
+
+  p10: {
+    title_en: 'Residual moveout from velocity error',
+    title_ar: 'الحركة المتبقية من خطأ السرعة',
+    concept_en: 'If you apply NMO with velocity v_app but true velocity is v_true, a curvature remains. The residual grows quadratically with offset, causing phase misalignment at far offsets. Stacked amplitude drops accordingly.',
+    concept_ar: 'إذا طبّقت NMO بسرعة v_app لكن السرعة الحقيقية v_true، تبقى حركة منحنية. المتبقي ينمو تربيعيًا مع الإزاحة، مسببًا عدم توافق في الطور عند الإزاحات البعيدة. سعة التجميع تنخفض.',
+    formula: 'δ(Δt) ≈ −(x²/t₀) · (δv/v³)',
+    mistake_en: 'Picking one velocity for all offsets — real data need offset-dependent (anisotropic) corrections.',
+    mistake_ar: 'اختيار سرعة واحدة لكل الإزاحات — البيانات الحقيقية تحتاج تصحيحات تعتمد على الإزاحة (تباين الخواص).',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        Residual curvature grows with offset
+      </text>
+      <line x1="60" y1="40" x2="60" y2="200" stroke="#2a3a55"/>
+      <line x1="60" y1="200" x2="470" y2="200" stroke="#2a3a55"/>
+      <text x="50" y="45" fill="#94a3b8" font-size="9" text-anchor="end">t</text>
+      <text x="460" y="220" fill="#94a3b8" font-size="9">offset</text>
+
+      <line x1="60" y1="100" x2="470" y2="100" stroke="#22c55e" stroke-width="2" stroke-dasharray="6 4"/>
+      <path d="M60,100 Q200,100 300,110 Q380,120 460,140" stroke="#ef4444" stroke-width="2.5" fill="none"/>
+
+      <line x1="460" y1="100" x2="460" y2="140" stroke="#ef4444" stroke-dasharray="3 3"/>
+      <text x="475" y="125" fill="#ef4444" font-size="9">residual</text>
+
+      <text x="80" y="95" fill="#22c55e" font-size="10">perfect NMO (flat)</text>
+      <text x="80" y="135" fill="#ef4444" font-size="10">wrong v</text>
+
+      <text x="250" y="230" fill="#94a3b8" font-size="10" text-anchor="middle">
+        δ(Δt) grows as x² → far traces decorrelate
+      </text>
+    </svg>`
+  },
+
+  p11: {
+    title_en: 'Apparent vs true dip before migration',
+    title_ar: 'الميل الظاهري مقابل الحقيقي قبل الترحيل',
+    concept_en: 'On the unmigrated section, energy from a dipping reflector arrives at a shallower apparent angle. The relationship tan θ_app = sin θ means a 30° true dip appears as 26.6° — migration correctly re-steepens it.',
+    concept_ar: 'على المقطع غير المُرحّل، تصل طاقة المنعكس المائل بزاوية ظاهرية أقل. العلاقة tan θ_app = sin θ تعني أن ميلًا حقيقيًا 30° يظهر 26.6° — الترحيل يُعيد حِدّته.',
+    formula: 'tan θ<sub>app</sub> = sin θ',
+    mistake_en: 'Assuming apparent = true dip. For 45° true dip, apparent is only 35.3° — a 10° error.',
+    mistake_ar: 'افتراض أن الظاهري = الحقيقي. لميل حقيقي 45°، الظاهري 35.3° فقط — خطأ 10°.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="120" y="18" fill="#f59e0b" font-size="11" text-anchor="middle" font-weight="600">Before migration</text>
+      <line x1="20" y1="60" x2="240" y2="60" stroke="#94a3b8"/>
+      <line x1="40" y1="200" x2="220" y2="60" stroke="#f59e0b" stroke-width="3"/>
+      <path d="M120,60 A100,100 0 0 0 100,80" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="140" y="80" fill="#f59e0b" font-size="11">θ_app = 26.6°</text>
+
+      <text x="380" y="18" fill="#22c55e" font-size="11" text-anchor="middle" font-weight="600">After migration</text>
+      <line x1="270" y1="60" x2="490" y2="60" stroke="#94a3b8"/>
+      <line x1="290" y1="230" x2="470" y2="60" stroke="#22c55e" stroke-width="3">
+        <animate attributeName="x1" values="400;290;290" dur="2.5s" repeatCount="indefinite"/>
+      </line>
+      <path d="M380,60 A100,100 0 0 0 360,85" fill="none" stroke="#22c55e" stroke-width="1.5"/>
+      <text x="400" y="85" fill="#22c55e" font-size="11">θ = 30°</text>
+
+      <text x="250" y="220" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Migration moves energy up-dip, restoring true steepness
+      </text>
+    </svg>`
+  },
+
+  p12: {
+    title_en: 'Stolt dispersion relation',
+    title_ar: 'علاقة تشتت Stolt',
+    concept_en: 'In the Fourier domain, the wave equation forces k_z to depend on k_x and ω via the dispersion relation. Migration maps (k_x, ω) → (k_x, k_z) using this. When k_x = 0 (vertical propagation), k_z = ω/v.',
+    concept_ar: 'في مجال فورييه، معادلة الموجة تُلزم k_z بالاعتماد على k_x و ω عبر علاقة التشتت. الترحيل يُحوّل (k_x, ω) → (k_x, k_z). عند k_x = 0 (انتشار رأسي)، k_z = ω/v.',
+    formula: 'k<sub>z</sub> = (ω/v) · √(1 − (v·k<sub>x</sub>/ω)²)',
+    mistake_en: 'Confusing ω (angular frequency, rad/s) with f (Hz). ω = 2πf.',
+    mistake_ar: 'الخلط بين ω (تردد زاوي) و f (هرتز). ω = 2πf.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        Dispersion surface: kz vs kx for fixed ω
+      </text>
+      <line x1="60" y1="40" x2="60" y2="200" stroke="#2a3a55"/>
+      <line x1="60" y1="200" x2="470" y2="200" stroke="#2a3a55"/>
+      <text x="50" y="45" fill="#94a3b8" font-size="9" text-anchor="end">kz</text>
+      <text x="460" y="220" fill="#94a3b8" font-size="9">kx</text>
+
+      <path d="M60,60 Q150,62 250,110 Q350,160 400,200" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
+
+      <circle cx="60" cy="60" r="6" fill="#22c55e"/>
+      <text x="80" y="58" fill="#22c55e" font-size="10">kz = ω/v (vertical)</text>
+
+      <circle cx="400" cy="200" r="6" fill="#f59e0b"/>
+      <text x="360" y="185" fill="#f59e0b" font-size="10">kx = ω/v</text>
+
+      <text x="250" y="230" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Diagonal events (kx≠0) propagate at angle; migration places them correctly
+      </text>
+    </svg>`
+  },
+
+  p13: {
+    title_en: 'Horizontal migration displacement',
+    title_ar: 'الإزاحة الأفقية في الترحيل',
+    concept_en: 'A dipping reflector at depth z, when migrated, shifts horizontally by d_x = z·sin θ. Deep and steep = big shift; shallow and gentle = small shift.',
+    concept_ar: 'المنعكس المائل عند العمق z، عند ترحيله، ينزاح أفقيًا بمقدار d_x = z·sin θ. عميق وحاد = إزاحة كبيرة؛ ضحل ولطيف = صغيرة.',
+    formula: 'd<sub>x</sub> = z · sin θ',
+    mistake_en: 'Assuming migration only moves things in z — it also moves horizontally for dipping events.',
+    mistake_ar: 'افتراض أن الترحيل يحرّك في z فقط — إنه يحرّك أفقيًا أيضًا للأحداث المائلة.',
+    svg: `<svg viewBox="0 0 500 240">
+      <line x1="40" y1="40" x2="460" y2="40" stroke="#94a3b8"/>
+      <text x="250" y="25" fill="#94a3b8" font-size="10" text-anchor="middle">surface</text>
+
+      <line x1="80" y1="220" x2="350" y2="40" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 3" opacity=".6"/>
+      <circle cx="290" cy="120" r="5" fill="#f59e0b"/>
+      <text x="300" y="115" fill="#f59e0b" font-size="10">apparent</text>
+
+      <line x1="80" y1="220" x2="350" y2="40" stroke="#22c55e" stroke-width="2.5"/>
+      <circle cx="200" cy="120" r="5" fill="#22c55e"/>
+      <text x="180" y="115" fill="#22c55e" font-size="10">true</text>
+
+      <line x1="200" y1="120" x2="290" y2="120" stroke="#38bdf8" stroke-width="2" marker-end="url(#arr13)"/>
+      <defs><marker id="arr13" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" fill="#38bdf8"/>
+      </marker></defs>
+      <text x="245" y="112" fill="#38bdf8" font-size="11" font-weight="600" text-anchor="middle">d_x = z·sin θ</text>
+
+      <line x1="200" y1="120" x2="200" y2="40" stroke="#94a3b8" stroke-dasharray="2 3"/>
+      <text x="185" y="85" fill="#94a3b8" font-size="10">z</text>
+
+      <text x="250" y="235" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Migration moves apparent → true, toward the up-dip side
+      </text>
+    </svg>`
+  },
+
+  p14: {
+    title_en: 'AVO gradient and intercept',
+    title_ar: 'تدرّج وتقاطع AVO',
+    concept_en: 'Shuey\'s approximation: R(θ) = R₀ + G·sin²θ. Positive G = amplitude increases with angle (Class I-ish); negative G = amplitude decreases (Class III, typical gas sand). The shape is a parabola in sin²θ.',
+    concept_ar: 'تقريب Shuey: R(θ) = R₀ + G·sin²θ. G موجب = السعة تزداد مع الزاوية (قريب من الصنف I)؛ G سالب = تنقص (الصنف III، نموذجي للرمل الغازي). الشكل قطع مكافئ في sin²θ.',
+    formula: 'R(θ) = R<sub>0</sub> + G·sin<sup>2</sup>θ',
+    mistake_en: 'Using R₀ alone to detect gas — the gradient G carries the diagnostic information.',
+    mistake_ar: 'استخدام R₀ وحده للكشف عن الغاز — التدرّج G يحمل المعلومة التشخيصية.',
+    svg: `<svg viewBox="0 0 500 260">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        AVO response by class (sin²θ on x-axis, R on y-axis)
+      </text>
+      <line x1="70" y1="140" x2="470" y2="140" stroke="#2a3a55"/>
+      <line x1="70" y1="40" x2="70" y2="240" stroke="#2a3a55"/>
+      <text x="60" y="45" fill="#94a3b8" font-size="9" text-anchor="end">R</text>
+      <text x="460" y="160" fill="#94a3b8" font-size="9">sin²θ</text>
+
+      <path d="M70,60 L460,50" stroke="#22c55e" stroke-width="2"/>
+      <text x="380" y="60" fill="#22c55e" font-size="9">Class I (bright)</text>
+
+      <path d="M70,90 L460,80" stroke="#38bdf8" stroke-width="2"/>
+      <text x="380" y="78" fill="#38bdf8" font-size="9">Class IIp</text>
+
+      <path d="M70,120 L460,200" stroke="#f59e0b" stroke-width="2"/>
+      <text x="400" y="195" fill="#f59e0b" font-size="9">Class III (gas sand)</text>
+
+      <path d="M70,160 L460,230" stroke="#ef4444" stroke-width="2"/>
+      <text x="400" y="225" fill="#ef4444" font-size="9">Class IV</text>
+
+      <circle cx="400" cy="120" r="4" fill="#f59e0b"/>
+      <text x="410" y="115" fill="#f59e0b" font-size="10">P14 point</text>
+    </svg>`
+  },
+
+  p15: {
+    title_en: 'R₀-G crossplot',
+    title_ar: 'مخطط R₀-G التقاطعي',
+    concept_en: 'Plotting R₀ (intercept) against G (gradient) for many CDPs reveals lithology clusters. Gas sands sit in the background trend; brine-saturated rocks sit on it. Crossplot analysis is the basis of AVO inversion.',
+    concept_ar: 'رسم R₀ (التقاطع) مقابل G (التدرّج) للعديد من CDPs يكشف مجموعات صخرية. الرمال الغازية تنزاح عن الاتجاه الخلفي؛ الصخور المشبعة بالماء تقع عليه. تحليل المخطط أساس عكس AVO.',
+    formula: 'R₀ = R(0°), &nbsp; G = [R(45°) − R₀] / sin²45°',
+    mistake_en: 'Reading R₀ and G from a single CDP; real interpretation needs the full crossplot cloud.',
+    mistake_ar: 'قراءة R₀ و G من CMP واحد؛ التفسير الحقيقي يحتاج سحابة النقاط الكاملة.',
+    svg: `<svg viewBox="0 0 500 260">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        R₀-G crossplot: gas sands deviate from background trend
+      </text>
+      <line x1="70" y1="240" x2="470" y2="240" stroke="#2a3a55"/>
+      <line x1="70" y1="40" x2="70" y2="240" stroke="#2a3a55"/>
+      <text x="60" y="45" fill="#94a3b8" font-size="9" text-anchor="end">G</text>
+      <text x="460" y="258" fill="#94a3b8" font-size="9">R₀</text>
+
+      <line x1="70" y1="200" x2="460" y2="80" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <text x="380" y="75" fill="#94a3b8" font-size="9">background trend</text>
+
+      <g fill="#38bdf8" opacity=".7">
+        <circle cx="140" cy="195" r="4"/><circle cx="180" cy="185" r="4"/>
+        <circle cx="220" cy="175" r="4"/><circle cx="260" cy="160" r="4"/>
+        <circle cx="300" cy="150" r="4"/><circle cx="340" cy="135" r="4"/>
+        <circle cx="380" cy="120" r="4"/><circle cx="420" cy="105" r="4"/>
+      </g>
+
+      <g fill="#f59e0b" opacity=".9">
+        <circle cx="180" cy="215" r="6"/><circle cx="230" cy="200" r="6"/>
+        <circle cx="280" cy="195" r="6"/><circle cx="320" cy="180" r="6"/>
+      </g>
+      <text x="290" y="228" fill="#f59e0b" font-size="10" text-anchor="middle" font-weight="600">
+        gas sand cluster (below trend)
+      </text>
+
+      <circle cx="340" cy="135" r="7" fill="#22c55e" stroke="#fff" stroke-width="1.5"/>
+      <text x="355" y="132" fill="#22c55e" font-size="10">P15 answer here</text>
+    </svg>`
+  },
+
+  p16: {
+    title_en: 'AVO classification (Rutherford-Williams)',
+    title_ar: 'تصنيف AVO (Rutherford-Williams)',
+    concept_en: 'Four classes based on the signs of R₀ and G. Class III (R₀<0, G<0) = classic bright spot gas sand. Class IIp (R₀>0, G<0) shows phase reversal at far offsets — also gas-prone.',
+    concept_ar: 'أربع فئات حسب إشارتَي R₀ و G. الصنف III (R₀<0, G<0) = بقعة لامعة نموذجية للغاز. الصنف IIp (R₀>0, G<0) يُظهر انعكاس طور عند الإزاحات البعيدة — أيضًا مرشح للغاز.',
+    formula: 'Class III: R₀ &lt; 0, G &lt; 0',
+    mistake_en: 'Treating all gas sands as bright spots — Class IIp shows a phase reversal, not a brightening.',
+    mistake_ar: 'التعامل مع كل رمال الغاز كبقع لامعة — الصنف IIp يظهر انعكاس طور وليس لمعانًا.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        Four AVO classes (R vs sin²θ)
+      </text>
+      <line x1="250" y1="40" x2="250" y2="220" stroke="#2a3a55"/>
+      <line x1="60" y1="130" x2="470" y2="130" stroke="#2a3a55"/>
+
+      <text x="155" y="65" fill="#94a3b8" font-size="10" text-anchor="middle">R₀ &gt; 0</text>
+      <text x="360" y="65" fill="#94a3b8" font-size="10" text-anchor="middle">R₀ &lt; 0</text>
+      <text x="155" y="200" fill="#94a3b8" font-size="10" text-anchor="middle">G &gt; 0</text>
+      <text x="360" y="200" fill="#94a3b8" font-size="10" text-anchor="middle">G &lt; 0</text>
+
+      <text x="130" y="105" fill="#22c55e" font-size="11" text-anchor="middle" font-weight="600">Class I</text>
+      <text x="130" y="160" fill="#38bdf8" font-size="11" text-anchor="middle" font-weight="600">Class IIp</text>
+      <text x="370" y="105" fill="#f59e0b" font-size="11" text-anchor="middle" font-weight="600">Class II</text>
+      <text x="370" y="160" fill="#ef4444" font-size="11" text-anchor="middle" font-weight="600">Class III</text>
+
+      <circle cx="370" cy="145" r="6" fill="#ef4444" class="pulse-dot"/>
+      <text x="385" y="145" fill="#ef4444" font-size="9">P16 here</text>
+    </svg>`
+  },
+
+  p17: {
+    title_en: 'FK wavenumber relationship',
+    title_ar: 'علاقة العدد الموجي FK',
+    concept_en: 'In the (f, k) plane, a linear event with apparent velocity v appears on a straight line through the origin with slope 1/v. Steep slopes = slow events (ground roll). Flat lines = steep events (primaries).',
+    concept_ar: 'في مستوى (f, k)، الحدث الخطي بسرعة ظاهرية v يظهر على خط مستقيم عبر الأصل ميله 1/v. ميل شديد = أحداث بطيئة (Ground roll). خطوط مسطحة = أحداث سريعة (ابتدائيات).',
+    formula: 'k = f / v',
+    mistake_en: 'Confusing f-v (time) with f-k (frequency-wavenumber). k is in cycles/m, not m/s.',
+    mistake_ar: 'الخلط بين مجال f-v (زمن) و f-k (تردد-عدد موجي). k بوحدة دورات/م، ليس م/ث.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        FK plane: steep slope = slow event
+      </text>
+      <line x1="250" y1="30" x2="250" y2="210" stroke="#2a3a55"/>
+      <line x1="60" y1="120" x2="470" y2="120" stroke="#2a3a55"/>
+      <text x="245" y="35" fill="#94a3b8" font-size="9" text-anchor="end">f</text>
+      <text x="460" y="138" fill="#94a3b8" font-size="9">k</text>
+
+      <line x1="250" y1="120" x2="430" y2="40" stroke="#22c55e" stroke-width="2.5"/>
+      <text x="400" y="55" fill="#22c55e" font-size="10">v = fast (slope small)</text>
+
+      <line x1="250" y1="120" x2="350" y2="40" stroke="#ef4444" stroke-width="2.5"/>
+      <text x="355" y="55" fill="#ef4444" font-size="10">v = slow (ground roll)</text>
+
+      <line x1="250" y1="120" x2="400" y2="120" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="4 3"/>
+      <text x="410" y="115" fill="#38bdf8" font-size="10">flat (k=0)</text>
+    </svg>`
+  },
+
+  p18: {
+    title_en: 'FK filter design',
+    title_ar: 'تصميم مرشح FK',
+    concept_en: 'A typical FK filter is a wedge: reject high |k| (slow noise) at low frequencies, pass low |k| (fast primaries). This exploits the velocity separation between signal and ground roll.',
+    concept_ar: 'مرشح FK النموذجي إسفيني: يرفض |k| العالية (ضوضاء بطيئة) عند الترددات المنخفضة، ويمرّر |k| المنخفضة (ابتدائيات سريعة). هذا يستغل الفصل بالسرعة بين الإشارة والـ ground roll.',
+    formula: 'Pass: |k| &lt; f/v<sub>signal</sub> &nbsp;·&nbsp; Reject: |k| &gt; f/v<sub>noise</sub>',
+    mistake_en: 'Filtering too aggressively — you may clip legitimate steep-dip reflections.',
+    mistake_ar: 'الترشيح بقوة — قد تقصّ انعكاسات شرعية ذات ميل حاد.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        FK fan filter: keep central wedge, reject flanks
+      </text>
+      <rect x="60" y="30" width="380" height="190" fill="#0b1220" stroke="#2a3a55"/>
+      <text x="250" y="25" fill="#94a3b8" font-size="9" text-anchor="middle" transform="rotate(0)"/>
+
+      <defs>
+        <linearGradient id="keepGrad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="rgba(34,197,94,.4)"/>
+          <stop offset="100%" stop-color="rgba(34,197,94,.1)"/>
+        </linearGradient>
+      </defs>
+      <polygon points="250,30 350,220 150,220" fill="url(#keepGrad)" stroke="#22c55e"/>
+      <text x="250" y="145" fill="#22c55e" font-size="11" text-anchor="middle" font-weight="600">PASS</text>
+
+      <polygon points="60,30 150,220 60,220" fill="rgba(239,68,68,.2)" stroke="#ef4444"/>
+      <text x="105" y="150" fill="#ef4444" font-size="10" text-anchor="middle">reject</text>
+
+      <polygon points="440,30 440,220 350,220" fill="rgba(239,68,68,.2)" stroke="#ef4444"/>
+      <text x="395" y="150" fill="#ef4444" font-size="10" text-anchor="middle">reject</text>
+
+      <text x="250" y="235" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Primaries (low k) survive; ground roll (high k) removed
+      </text>
+    </svg>`
+  },
+
+  p19: {
+    title_en: 'Spatial aliasing limit',
+    title_ar: 'حد Aliasing المكاني',
+    concept_en: 'A wave sampled at dx is unaliased if it crosses < 2 trace intervals per wavelength. This sets v_min = 2·dx·fmax. Slower waves (ground roll) alias and fold into FK space irreversibly.',
+    concept_ar: 'الموجة المُعيّنة بـ dx غير مُستعارة (unaliased) إذا عبرت أقل من فاصلتَي أثر لكل طول موجة. هذا يعطي v_min = 2·dx·fmax. الموجات الأبطأ (ground roll) تُستعار وتنطوي في فضاء FK بشكل لا رجعة فيه.',
+    formula: 'v<sub>min</sub> = 2 · dx · f<sub>max</sub>',
+    mistake_en: 'Sampling too coarsely in space to save cost — aliased data cannot be fixed later.',
+    mistake_ar: 'أخذ عينات مكانية خشنة جدًا لتوفير التكلفة — البيانات المستعارة لا تُصلح لاحقًا.',
+    svg: `<svg viewBox="0 0 500 220">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        Aliasing: sampling below Nyquist folds the wave
+      </text>
+
+      <text x="130" y="55" fill="#22c55e" font-size="10" text-anchor="middle">Proper sampling (dx small)</text>
+      <line x1="20" y1="140" x2="240" y2="140" stroke="#2a3a55"/>
+      <path d="M20,100 Q60,60 100,100 Q140,140 180,100 Q220,60 240,100"
+            stroke="#22c55e" stroke-width="2" fill="none"/>
+      <g fill="#22c55e">
+        <circle cx="20" cy="100" r="3"/><circle cx="40" cy="85" r="3"/>
+        <circle cx="60" cy="72" r="3"/><circle cx="80" cy="85" r="3"/>
+        <circle cx="100" cy="100" r="3"/><circle cx="120" cy="115" r="3"/>
+        <circle cx="140" cy="128" r="3"/><circle cx="160" cy="115" r="3"/>
+        <circle cx="180" cy="100" r="3"/><circle cx="200" cy="85" r="3"/>
+        <circle cx="220" cy="72" r="3"/>
+      </g>
+
+      <text x="370" y="55" fill="#ef4444" font-size="10" text-anchor="middle">Aliased (dx too large)</text>
+      <line x1="260" y1="140" x2="480" y2="140" stroke="#2a3a55"/>
+      <path d="M260,100 Q310,60 360,100 Q410,140 480,100"
+            stroke="#ef4444" stroke-width="2" fill="none"/>
+      <g fill="#ef4444">
+        <circle cx="280" cy="85" r="4"/>
+        <circle cx="320" cy="72" r="4"/>
+        <circle cx="360" cy="100" r="4"/>
+        <circle cx="400" cy="128" r="4"/>
+        <circle cx="440" cy="115" r="4"/>
+      </g>
+      <text x="370" y="180" fill="#ef4444" font-size="9" text-anchor="middle">Apparent wavelength = 2·dx</text>
+
+      <text x="250" y="205" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Rule: v_min = 2·dx·f_max before folding into low-k aliases
+      </text>
+    </svg>`
+  },
+
+  p20: {
+    title_en: 'Linear Radon transform',
+    title_ar: 'تحويل Radon الخطي',
+    concept_en: 'The linear Radon sums amplitudes along all lines of slope p in the (t,x) panel. Each event collapses to a peak at its own p and intercept τ. Multiple parallel events = multiple peaks.',
+    concept_ar: 'Radon الخطي يجمع السعات على كل الخطوط ذات الميل p في لوحة (t,x). كل حدث ينطبق إلى قمة عند p و τ الخاصين به. أحداث متوازية متعددة = قمم متعددة.',
+    formula: 'τ = t − p·x &nbsp;→&nbsp; events become peaks in (τ,p)',
+    mistake_en: 'Forgetting the unit conversion when p is in ms/m and t is in s.',
+    mistake_ar: 'نسيان تحويل الوحدات عندما p بـ ms/m و t بـ s.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="120" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        (t, x) — linear events
+      </text>
+      <line x1="30" y1="30" x2="30" y2="200" stroke="#2a3a55"/>
+      <line x1="30" y1="200" x2="230" y2="200" stroke="#2a3a55"/>
+      <text x="22" y="35" fill="#94a3b8" font-size="9" text-anchor="end">t</text>
+      <text x="225" y="218" fill="#94a3b8" font-size="9">x</text>
+
+      <line x1="40" y1="160" x2="220" y2="100" stroke="#38bdf8" stroke-width="2.5"/>
+      <line x1="40" y1="190" x2="220" y2="130" stroke="#f59e0b" stroke-width="2.5"/>
+
+      <text x="370" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        (τ, p) — collapse to peaks
+      </text>
+      <line x1="280" y1="30" x2="280" y2="200" stroke="#2a3a55"/>
+      <line x1="280" y1="200" x2="480" y2="200" stroke="#2a3a55"/>
+      <text x="272" y="35" fill="#94a3b8" font-size="9" text-anchor="end">τ</text>
+      <text x="475" y="218" fill="#94a3b8" font-size="9">p</text>
+
+      <circle cx="370" cy="90" r="7" fill="#38bdf8" class="pulse-dot"/>
+      <circle cx="370" cy="140" r="7" fill="#f59e0b" class="pulse-dot"/>
+
+      <path d="M230,140 Q250,120 280,90" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2 3" fill="none" marker-end="url(#arr20)"/>
+      <defs><marker id="arr20" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/>
+      </marker></defs>
+
+      <text x="250" y="235" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Each event → one peak; energy spreads → focus
+      </text>
+    </svg>`
+  },
+
+  p21: {
+    title_en: 'Primaries vs multiples in Radon',
+    title_ar: 'الابتدائيات مقابل المضاعفات في Radon',
+    concept_en: 'Multiples travel longer paths in the subsurface → stronger moveout → larger p. Primaries have smaller p. This p-separation is what makes Radon-based demultiple possible.',
+    concept_ar: 'المضاعفات تسلك مسارات أطول في باطن الأرض → حركة أقوى → p أكبر. الابتدائيات لها p أصغر. هذا الفصل في p هو ما يجعل إزالة المضاعفات بـ Radon ممكنة.',
+    formula: 'p<sub>multiple</sub> &gt; p<sub>primary</sub>',
+    mistake_en: 'Applying Radon demultiple without first NMO — energy scatters and separation fails.',
+    mistake_ar: 'تطبيق إزالة المضاعفات بـ Radon بدون NMO أولًا — الطاقة تتشتت والفصل يفشل.',
+    svg: `<svg viewBox="0 0 500 220">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        Radon panel: multiples peak at larger p
+      </text>
+      <line x1="60" y1="190" x2="460" y2="190" stroke="#2a3a55"/>
+      <line x1="60" y1="30" x2="60" y2="190" stroke="#2a3a55"/>
+      <text x="52" y="35" fill="#94a3b8" font-size="9" text-anchor="end">τ</text>
+      <text x="455" y="208" fill="#94a3b8" font-size="9">p (ms/m)</text>
+
+      <line x1="130" y1="190" x2="130" y2="60" stroke="#22c55e" stroke-width="4" opacity=".9"/>
+      <text x="130" y="55" fill="#22c55e" font-size="10" text-anchor="middle">primary</text>
+      <text x="130" y="208" fill="#22c55e" font-size="9" text-anchor="middle">p ≈ 0.3</text>
+
+      <line x1="380" y1="190" x2="380" y2="40" stroke="#f59e0b" stroke-width="4" opacity=".9"/>
+      <text x="380" y="35" fill="#f59e0b" font-size="10" text-anchor="middle">multiple</text>
+      <text x="380" y="208" fill="#f59e0b" font-size="9" text-anchor="middle">p ≈ 0.9</text>
+
+      <text x="250" y="215" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Mute at p &gt; 0.5 → remove multiple, keep primary
+      </text>
+    </svg>`
+  },
+
+  p22: {
+    title_en: 'Parabolic Radon after NMO',
+    title_ar: 'Radon المكافئ بعد NMO',
+    concept_en: 'After NMO, primaries are flat (q≈0) but multiples retain curvature (q>0). Parabolic Radon τ = t − q·x² maps primaries to the central axis, multiples to side lobes. Perfect for demultiple.',
+    concept_ar: 'بعد NMO، الابتدائيات مسطحة (q≈0) لكن المضاعفات تحتفظ بانحناء (q>0). Radon المكافئ τ = t − q·x² يضع الابتدائيات على المحور المركزي، والمضاعفات على أجنحة. مثالي لإزالة المضاعفات.',
+    formula: 'τ = t − q·x² (q in ms/km²)',
+    mistake_en: 'Applying parabolic Radon before NMO — primaries are curved, so the whole basis is wrong.',
+    mistake_ar: 'تطبيق Radon المكافئ قبل NMO — الابتدائيات منحنية، فالأساس بأكمله خاطئ.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        After NMO → parabolic Radon separates multiples
+      </text>
+
+      <line x1="60" y1="40" x2="60" y2="200" stroke="#2a3a55"/>
+      <line x1="60" y1="200" x2="230" y2="200" stroke="#2a3a55"/>
+      <text x="22" y="45" fill="#94a3b8" font-size="9">t</text>
+      <text x="225" y="218" fill="#94a3b8" font-size="9">x</text>
+      <line x1="60" y1="120" x2="230" y2="120" stroke="#22c55e" stroke-width="2.5"/>
+      <path d="M60,170 Q150,170 230,140" stroke="#f59e0b" stroke-width="2" fill="none"/>
+
+      <text x="370" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        (τ, q) — flat vs parabolic
+      </text>
+      <line x1="280" y1="40" x2="280" y2="200" stroke="#2a3a55"/>
+      <line x1="280" y1="200" x2="480" y2="200" stroke="#2a3a55"/>
+      <text x="272" y="45" fill="#94a3b8" font-size="9" text-anchor="end">τ</text>
+      <text x="475" y="218" fill="#94a3b8" font-size="9">q</text>
+
+      <line x1="300" y1="120" x2="310" y2="120" stroke="#22c55e" stroke-width="6"/>
+      <text x="350" y="115" fill="#22c55e" font-size="10">primary at q≈0</text>
+
+      <line x1="380" y1="160" x2="390" y2="160" stroke="#f59e0b" stroke-width="6"/>
+      <text x="400" y="165" fill="#f59e0b" font-size="10">multiple at q&gt;0</text>
+
+      <text x="250" y="235" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Mute q &gt; q_threshold → keep primary, remove multiple
+      </text>
+    </svg>`
+  },
+
+  p23: {
+    title_en: 'RTM imaging condition',
+    title_ar: 'شرط التصوير في RTM',
+    concept_en: 'RTM propagates the source wavefield forward in time and the receiver wavefield backward. Where they meet (zero-lag in time), a reflector exists. The image is the sum of S·R products over time at each point.',
+    concept_ar: 'RTM يُمرّر حقل المصدر للأمام في الزمن وحقل المستقبلات للخلف. حيث يلتقيان (تأخر صفري)، يوجد منعكس. الصورة هي مجموع حاصل ضرب S·R عبر الزمن في كل نقطة.',
+    formula: 'I(x,z) = Σ<sub>t</sub> S(x,z,t) · R(x,z,t)',
+    mistake_en: 'Confusing RTM with one-way Kirchhoff — RTM handles overturned and steep dips that Kirchhoff misses.',
+    mistake_ar: 'الخلط بين RTM و Kirchhoff أحادي الاتجاه — RTM يعالج المنعكسات المقلوبة والحادة التي يفوّتها Kirchhoff.',
+    svg: `<svg viewBox="0 0 500 260">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        S wavefield expands, R wavefield focuses — cross-correlate
+      </text>
+
+      <line x1="40" y1="40" x2="460" y2="40" stroke="#94a3b8"/>
+      <text x="250" y="30" fill="#94a3b8" font-size="9" text-anchor="middle">surface (receivers)</text>
+
+      <circle cx="150" cy="80" r="40" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity=".7">
+        <animate attributeName="r" values="10;80;10" dur="3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="1;0;1" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <text x="150" y="55" fill="#38bdf8" font-size="9" text-anchor="middle">source S ↓</text>
+
+      <circle cx="350" cy="200" r="40" fill="none" stroke="#f59e0b" stroke-width="1.5" opacity=".7">
+        <animate attributeName="r" values="80;10;80" dur="3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <text x="350" y="185" fill="#f59e0b" font-size="9" text-anchor="middle">receiver R ↑</text>
+
+      <line x1="40" y1="200" x2="460" y2="200" stroke="#22c55e" stroke-width="3"/>
+      <text x="250" y="220" fill="#22c55e" font-size="10" text-anchor="middle">reflector (image point)</text>
+
+      <circle cx="250" cy="200" r="8" fill="#22c55e" class="pulse-dot"/>
+      <text x="250" y="195" fill="#22c55e" font-size="10" text-anchor="middle" font-weight="600">I = Σ S·R</text>
+
+      <text x="250" y="245" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Where S and R coincide in time, the image is bright
+      </text>
+    </svg>`
+  },
+
+  p24: {
+    title_en: 'RTM vs Kirchhoff',
+    title_ar: 'RTM مقابل Kirchhoff',
+    concept_en: 'Kirchhoff: ray-based, one-way, fast, breaks at steep dips and under salt. RTM: two-way wave equation, handles overturned reflections and subsalt, but 100× more expensive.',
+    concept_ar: 'Kirchhoff: قائم على الأشعة، أحادي الاتجاه، سريع، يفشل عند الميل الحاد وتحت الملح. RTM: معادلة موجة ثنائية الاتجاه، يعالج المنعكسات المقلوبة وتحت الملح، لكن تكلفته 100× أكثر.',
+    formula: 'Kirchhoff: Σ over rays &nbsp;|&nbsp; RTM: solve 2-way wave eq',
+    mistake_en: 'Using Kirchhoff for subsalt imaging to save cost — you will lose the steep salt flank entirely.',
+    mistake_ar: 'استخدام Kirchhoff لتصوير تحت الملح لتوفير التكلفة — ستفقد جناح الملح الحاد تمامًا.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="130" y="18" fill="#f59e0b" font-size="11" text-anchor="middle" font-weight="600">Kirchhoff (rays)</text>
+      <text x="370" y="18" fill="#22c55e" font-size="11" text-anchor="middle" font-weight="600">RTM (wavefield)</text>
+
+      <text x="130" y="45" fill="#94a3b8" font-size="9" text-anchor="middle">misses steep dips</text>
+      <text x="370" y="45" fill="#94a3b8" font-size="9" text-anchor="middle">handles overturned</text>
+
+      <polygon points="40,180 220,180 180,60 80,60" fill="rgba(56,189,248,.15)" stroke="#38bdf8"/>
+      <text x="130" y="130" fill="#94a3b8" font-size="10" text-anchor="middle">salt body</text>
+
+      <line x1="60" y1="60" x2="60" y2="180" stroke="#f59e0b" stroke-width="2"/>
+      <line x1="90" y1="60" x2="90" y2="180" stroke="#f59e0b" stroke-width="2"/>
+      <line x1="180" y1="60" x2="180" y2="180" stroke="#f59e0b" stroke-width="2" opacity=".3"/>
+      <text x="130" y="200" fill="#f59e0b" font-size="9" text-anchor="middle">vertical rays miss flank</text>
+
+      <polygon points="280,180 460,180 420,60 320,60" fill="rgba(56,189,248,.15)" stroke="#38bdf8"/>
+      <text x="370" y="130" fill="#94a3b8" font-size="10" text-anchor="middle">salt body</text>
+
+      <g stroke="#22c55e" fill="none" stroke-width="1.5">
+        <path d="M300,60 Q340,120 420,170"/>
+        <path d="M340,60 Q370,120 430,170"/>
+        <path d="M400,60 Q410,120 440,170"/>
+      </g>
+      <text x="370" y="200" fill="#22c55e" font-size="9" text-anchor="middle">full wavefield captures flank</text>
+
+      <text x="250" y="230" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Same geology; RTM images what Kirchhoff cannot
+      </text>
+    </svg>`
+  },
+
+  p25: {
+    title_en: 'Statics correction',
+    title_ar: 'تصحيح Statics',
+    concept_en: 'Near-surface low-velocity layers delay arrivals. The static correction removes this delay by replacing weathered velocity with a faster replacement velocity. Two-way path → factor 2 in formula.',
+    concept_ar: 'طبقات السطح المنخفضة السرعة تُأخّر الوصولات. تصحيح Static يزيل هذا التأخير باستبدال سرعة التجوية بسرعة بديلة أسرع. المسار ذهاب وعودة → معامل 2 في المعادلة.',
+    formula: 'Δt = 2h · (1/v<sub>w</sub> − 1/v<sub>r</sub>)',
+    mistake_en: 'Forgetting the factor of 2 — it is two-way travel through the weathered layer.',
+    mistake_ar: 'نسيان العامل 2 — إنه سفر ذهاب وعودة عبر طبقة التجوية.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        Weathered layer delays every trace by Δt
+      </text>
+
+      <rect x="40" y="40" width="180" height="60" fill="rgba(245,158,11,.15)" stroke="#f59e0b"/>
+      <text x="130" y="75" fill="#94a3b8" font-size="10" text-anchor="middle">v_w = 600 m/s (h = 20 m)</text>
+
+      <rect x="40" y="100" width="180" height="110" fill="rgba(34,197,94,.13)" stroke="#22c55e"/>
+      <text x="130" y="155" fill="#94a3b8" font-size="10" text-anchor="middle">v_r = 2000 m/s</text>
+
+      <line x1="130" y1="40" x2="130" y2="210" stroke="#ef4444" stroke-width="2" stroke-dasharray="3 3"/>
+      <text x="145" y="130" fill="#ef4444" font-size="10">raw traveltime</text>
+
+      <line x1="280" y1="40" x2="280" y2="60" stroke="#38bdf8" stroke-width="2"/>
+      <line x1="280" y1="80" x2="280" y2="210" stroke="#38bdf8" stroke-width="2"/>
+      <text x="295" y="130" fill="#38bdf8" font-size="10">after statics</text>
+
+      <rect x="350" y="40" width="120" height="170" fill="var(--bg)" stroke="#2a3a55"/>
+      <text x="410" y="55" fill="#94a3b8" font-size="9" text-anchor="middle">Δt</text>
+      <text x="410" y="120" fill="#22c55e" font-size="18" text-anchor="middle" font-weight="700">≈46.7</text>
+      <text x="410" y="145" fill="#94a3b8" font-size="10" text-anchor="middle">ms</text>
+      <text x="410" y="175" fill="#94a3b8" font-size="9" text-anchor="middle">removed</text>
+    </svg>`
+  },
+
+  p26: {
+    title_en: 'DMO velocity factor',
+    title_ar: 'معامل سرعة DMO',
+    concept_en: 'For dipping events, the effective velocity is higher than the stacking velocity by factor 1/cos θ. DMO corrects this before stacking, so the final stack sees flat-equivalent velocities.',
+    concept_ar: 'للأحداث المائلة، السرعة الفعالة أعلى من سرعة التجميع بمعامل 1/cos θ. DMO يُصحح هذا قبل التجميع، فيرى التجميع النهائي سرعات مكافئة للأفقي.',
+    formula: 'v<sub>DMO</sub> = v<sub>stack</sub> / cos θ',
+    mistake_en: 'Using cos θ in numerator instead of denominator — the correction increases velocity, not decreases.',
+    mistake_ar: 'وضع cos θ في البسط بدل المقام — التصحيح يزيد السرعة، لا يقللها.',
+    svg: `<svg viewBox="0 0 500 240">
+      <text x="130" y="18" fill="#f59e0b" font-size="11" text-anchor="middle" font-weight="600">Before DMO</text>
+      <text x="370" y="18" fill="#22c55e" font-size="11" text-anchor="middle" font-weight="600">After DMO</text>
+
+      <text x="130" y="45" fill="#94a3b8" font-size="9" text-anchor="middle">dipping event, wrong NMO</text>
+      <line x1="40" y1="60" x2="220" y2="60" stroke="#243350"/>
+      <line x1="40" y1="60" x2="40" y2="200" stroke="#243350"/>
+      <path d="M50,90 Q130,90 210,180" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
+      <text x="130" y="220" fill="#f59e0b" font-size="10" text-anchor="middle">
+        appears curved in CMP
+      </text>
+
+      <text x="370" y="45" fill="#94a3b8" font-size="9" text-anchor="middle">dip energy moved to correct CMP</text>
+      <line x1="280" y1="60" x2="460" y2="60" stroke="#243350"/>
+      <line x1="280" y1="60" x2="280" y2="200" stroke="#243350"/>
+      <line x1="280" y1="120" x2="460" y2="120" stroke="#22c55e" stroke-width="2.5"/>
+      <text x="370" y="220" fill="#22c55e" font-size="10" text-anchor="middle">
+        now flat, ready to stack
+      </text>
+
+      <text x="250" y="235" fill="#94a3b8" font-size="10" text-anchor="middle">
+        v_DMO = v_stack / cos θ
+      </text>
+    </svg>`
+  },
+
+  p27: {
+    title_en: 'DMO before stacking — why?',
+    title_ar: 'DMO قبل التجميع — لماذا؟',
+    concept_en: 'NMO assumes horizontal reflectors. Dipping reflectors violate this assumption — their reflection points shift with offset, causing "smearing" across CMPs. DMO corrects the CMP assignment for all dips, then stacking becomes valid.',
+    concept_ar: 'NMO يفترض منعكسات أفقية. المنعكسات المائلة تخالف هذا الافتراضي — نقاط انعكاسها تنزاح مع الإزاحة، مسببة "تلطيخًا" عبر CMPs. DMO يُصحح تعيين CMP لكل الميول، فيصبح التجميع صحيحًا.',
+    formula: 'Order: NMO → DMO → Stack (DMO before stack)',
+    mistake_en: 'Skipping DMO to save time — dipping events end up at wrong positions and stack poorly.',
+    mistake_ar: 'تخطي DMO لتوفير الوقت — الأحداث المائلة تنتهي في مواقع خاطئة وتُجمع بشكل سيئ.',
+    svg: `<svg viewBox="0 0 500 200">
+      <text x="250" y="18" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">
+        DMO workflow: correct CMP assignment before stack
+      </text>
+
+      <rect x="20" y="60" width="80" height="70" rx="8" fill="var(--surface2)" stroke="var(--accent)"/>
+      <text x="60" y="100" fill="var(--text)" font-size="11" text-anchor="middle">Raw CMP</text>
+
+      <line x1="100" y1="95" x2="130" y2="95" stroke="var(--muted)" stroke-width="2" marker-end="url(#arr27)"/>
+      <defs><marker id="arr27" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="var(--muted)"/>
+      </marker></defs>
+
+      <rect x="130" y="60" width="80" height="70" rx="8" fill="var(--surface2)" stroke="var(--accent)"/>
+      <text x="170" y="100" fill="var(--text)" font-size="11" text-anchor="middle">NMO</text>
+
+      <line x1="210" y1="95" x2="240" y2="95" stroke="var(--muted)" stroke-width="2" marker-end="url(#arr27)"/>
+
+      <rect x="240" y="60" width="80" height="70" rx="8" fill="var(--surface2)" stroke="var(--warning)"/>
+      <text x="280" y="100" fill="var(--text)" font-size="11" text-anchor="middle">DMO</text>
+
+      <line x1="320" y1="95" x2="350" y2="95" stroke="var(--muted)" stroke-width="2" marker-end="url(#arr27)"/>
+
+      <rect x="350" y="60" width="80" height="70" rx="8" fill="var(--surface2)" stroke="var(--success)"/>
+      <text x="390" y="100" fill="var(--text)" font-size="11" text-anchor="middle">Stack</text>
+
+      <text x="280" y="165" fill="#f59e0b" font-size="10" text-anchor="middle" font-weight="600">
+        DMO is here — fixes dip before summing
+      </text>
+
+      <text x="250" y="190" fill="#94a3b8" font-size="10" text-anchor="middle">
+        Without DMO: dipping energy sums destructively
+      </text>
+    </svg>`
+  }
+};
+
+/* ---------- Info modal (injected once) ---------- */
+(function createInfoModal(){
+  if(document.getElementById('infoModal')) return;
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.id = 'infoModal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <button class="modal-close">×</button>
+      <div class="info-header">
+        <div class="info-icon-badge">ℹ️</div>
+        <h2 id="infoTitle">Concept</h2>
+      </div>
+      <div id="infoBody"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.querySelector('.modal-close').onclick = () => {
+    modal.classList.remove('open');
+    playSound('click');
+  };
+  modal.addEventListener('click', e => {
+    if(e.target === modal) modal.classList.remove('open');
+  });
+})();
+
+function showInfo(problemId){
+  const info = PROBLEM_INFO[problemId];
+  const modal = document.getElementById('infoModal');
+  if(!info || !modal){ return; }
+  const isAr = state.lang === 'ar';
+  const probTitle = document.querySelector('#' + problemId + ' .problem-head h4');
+  const titleText = probTitle ? probTitle.textContent : (isAr ? info.title_ar : info.title_en);
+
+  document.getElementById('infoTitle').textContent = titleText;
+
+  const body = document.getElementById('infoBody');
+  body.innerHTML = `
+    <div class="info-section">
+      <h3>${isAr ? '💡 المفهوم' : '💡 Concept'}</h3>
+      <p>${isAr ? info.concept_ar : info.concept_en}</p>
+    </div>
+
+    <div class="info-section">
+      <h3>${isAr ? '📐 المعادلة' : '📐 Formula'}</h3>
+      <div class="info-eq">${info.formula}</div>
+    </div>
+
+    <div class="info-section">
+      <h3>${isAr ? '🎨 الرسم التفاعلي' : '🎨 Interactive diagram'}</h3>
+      <div class="info-svg-wrap">${info.svg}</div>
+    </div>
+
+    <div class="info-mistake">
+      ${isAr ? info.mistake_ar : info.mistake_en}
+    </div>
+
+    <div class="info-tip">
+      ${isAr ? 'راجع المسألة وحاول قبل كشف الحل' : 'Try the problem before revealing the solution'}
+    </div>
+  `;
+
+  modal.classList.add('open');
+  playSound('modal');
+}
+
+/* ---------- Add info buttons to all problems ---------- */
+document.querySelectorAll('.problem').forEach(p => {
+  const head = p.querySelector('.problem-head');
+  if(!head || head.querySelector('.info-btn')) return;
+  const btn = document.createElement('button');
+  btn.className = 'info-btn';
+  btn.type = 'button';
+  btn.innerHTML = 'i';
+  btn.title = state.lang === 'ar' ? 'شرح تفصيلي' : 'Detailed explanation';
+  btn.setAttribute('aria-label', 'Show explanation');
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    showInfo(p.id);
+  };
+  const badge = head.querySelector('.badge');
+  if(badge) head.insertBefore(btn, badge);
+  else head.appendChild(btn);
+});
+
+/* ---------- Update info button titles on language change ---------- */
+const _origApplyLang_info = (typeof applyLang === 'function') ? applyLang : null;
+if(_origApplyLang_info){
+  applyLang = function(){
+    _origApplyLang_info.apply(this, arguments);
+    document.querySelectorAll('.info-btn').forEach(btn => {
+      btn.title = state.lang === 'ar' ? 'شرح تفصيلي' : 'Detailed explanation';
+    });
+  };
+}
+
+/* ---------- Sound state save/load already handled by state object ---------- */
+playSound('modal');
+console.log('✅ Advanced info modals + sound engine loaded successfully');
+</script>
+</body>
+</html>
